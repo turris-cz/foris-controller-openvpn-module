@@ -1,0 +1,50 @@
+{
+    "oneOf": [
+        {
+            "description": "Request to generate CA (asynchronously)",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["request"]},
+                "action": {"enum": ["generate_ca"]}
+            },
+            "additionalProperties": false
+        },
+        {
+            "description": "Reply to generate CA (asynchronously)",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["reply"]},
+                "action": {"enum": ["generate_ca"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {"type": "string"}
+                    },
+                    "additionalProperties": false,
+                    "required": ["task_id"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Notification during CA generation",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["notification"]},
+                "action": {"enum": ["generate_ca"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {"type": "string"},
+                        "status": {"enum": ["succeeded", "failed", "ca_generating", "ca_done", "server_generating", "server_done"]}
+                    },
+                    "additionalProperties": false,
+                    "required": ["task_id", "status"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        }
+    ]
+}

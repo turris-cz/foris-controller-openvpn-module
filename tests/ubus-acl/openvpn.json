@@ -1,0 +1,10 @@
+{
+    "user": "stepan",
+    "access": {
+        "foris-controller-openvpn": {
+            "methods": [ "generate_ca" ]
+        }
+    },
+    "publish": [ "foris-controller-openvpn" ],
+    "subscribe": [ "foris-controller-openvpn" ]
+}
