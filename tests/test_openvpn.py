@@ -226,3 +226,144 @@ def test_get_status_openwrt_generating(generating_certs, infrastructure, ubusd_t
         u"kind": u"reply",
         u"data": {u"status": u"generating", u"clients": []}
     }
+
+
+@pytest.mark.only_backends(['mock'])
+def test_generate_client_mock(infrastructure, ubusd_test):
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert "data" in res
+    assert "clients" in res["data"]
+    orig_count = len(res["data"]["clients"])
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "generate_client",
+        "kind": "request",
+        "data": {"name": "new.client_1"},
+    })
+    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert "task_id" in res["data"]
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert "data" in res
+    assert "clients" in res["data"]
+    assert len(res["data"]["clients"]) == orig_count + 1
+    assert res["data"]["clients"][-1]["name"] == "new.client_1"
+
+
+@pytest.mark.only_backends(['openwrt'])
+def test_generate_client_openwrt_success(ready_certs, infrastructure, ubusd_test):
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert "data" in res
+    assert "clients" in res["data"]
+    orig_count = len(res["data"]["clients"])
+
+    filters = [("openvpn", "generate_client")]
+
+    notifications = infrastructure.get_notifications(filters=filters)
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "generate_client",
+        "kind": "request",
+        "data": {"name": "new.client_1"},
+    })
+    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert "task_id" in res["data"]
+    task_id = res["data"]["task_id"]
+
+    new_notifications = infrastructure.get_notifications(notifications, filters=filters)
+    while len(new_notifications) - len(notifications) < 3:
+        new_notifications = infrastructure.get_notifications(new_notifications, filters=filters)
+
+    assert new_notifications[-3]["action"] == "generate_client"
+    assert new_notifications[-3]["data"]["status"] == "client_generating"
+    assert new_notifications[-3]["data"]["task_id"] == task_id
+    assert new_notifications[-2]["action"] == "generate_client"
+    assert new_notifications[-2]["data"]["status"] == "client_done"
+    assert new_notifications[-2]["data"]["task_id"] == task_id
+    assert new_notifications[-1]["action"] == "generate_client"
+    assert new_notifications[-1]["data"]["status"] == "succeeded"
+    assert new_notifications[-1]["data"]["task_id"] == task_id
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert "data" in res
+    assert "clients" in res["data"]
+    assert len(res["data"]["clients"]) == orig_count + 1
+    assert res["data"]["clients"][-1]["name"] == "new.client_1"
+
+
+@pytest.mark.only_backends(['openwrt'])
+def test_generate_client_openwrt_failed(empty_certs, infrastructure, ubusd_test):
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert "data" in res
+    assert "clients" in res["data"]
+    assert len(res["data"]["clients"]) == 0
+
+    filters = [("openvpn", "generate_client")]
+
+    notifications = infrastructure.get_notifications(filters=filters)
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "generate_client",
+        "kind": "request",
+        "data": {"name": "new.client_1"},
+    })
+    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert "task_id" in res["data"]
+    task_id = res["data"]["task_id"]
+
+    new_notifications = infrastructure.get_notifications(notifications, filters=filters)
+    while len(new_notifications) - len(notifications) < 1:
+        new_notifications = infrastructure.get_notifications(new_notifications, filters=filters)
+
+    assert new_notifications[-1]["action"] == "generate_client"
+    assert new_notifications[-1]["data"]["status"] == "failed"
+    assert new_notifications[-1]["data"]["task_id"] == task_id
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert "data" in res
+    assert "clients" in res["data"]
+    assert len(res["data"]["clients"]) == 0
+
+
+def test_generate_client_name_failed(empty_certs, infrastructure, ubusd_test):
+    def wrong_name(name):
+        res = infrastructure.process_message({
+            "module": "openvpn",
+            "action": "generate_client",
+            "kind": "request",
+            "data": {"name": name},
+        })
+        assert "errors" in res["data"]
+
+    wrong_name("aaa%")
+    wrong_name("bbb$")
+    wrong_name("ccc!")

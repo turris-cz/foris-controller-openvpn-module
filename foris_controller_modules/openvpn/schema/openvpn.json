@@ -90,6 +90,61 @@
             },
             "additionalProperties": false,
             "required": ["data"]
+        },
+        {
+            "description": "Request to generate client cert (asynchronously)",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["request"]},
+                "action": {"enum": ["generate_client"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"$ref": "#/definitions/openvpn_cert_name"}
+                    },
+                    "additionalProperties": false,
+                    "required": ["name"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Reply to generate client cert (asynchronously)",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["reply"]},
+                "action": {"enum": ["generate_client"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {"type": "string"}
+                    },
+                    "additionalProperties": false,
+                    "required": ["task_id"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Notification during client generation",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["notification"]},
+                "action": {"enum": ["generate_client"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {"type": "string"},
+                        "status": {"enum": ["succeeded", "failed", "client_generating", "client_done"]}
+                    },
+                    "additionalProperties": false,
+                    "required": ["task_id", "status"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
         }
     ]
 }

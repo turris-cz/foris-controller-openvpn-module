@@ -2,7 +2,7 @@
     "user": "stepan",
     "access": {
         "foris-controller-openvpn": {
-            "methods": [ "generate_ca" ]
+            "methods": [ "generate_ca", "get_status", "generate_client" ]
         }
     },
     "publish": [ "foris-controller-openvpn" ],

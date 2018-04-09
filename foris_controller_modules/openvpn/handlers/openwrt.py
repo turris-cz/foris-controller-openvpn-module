@@ -41,3 +41,7 @@ class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
     @logger_wrapper(logger)
     def get_status(self):
         return self.cmds.get_status()
+
+    @logger_wrapper(logger)
+    def generate_client(self, name, notify, exit_notify, reset_notify):
+        return self.asynchronuous.generate_client(name, notify, exit_notify, reset_notify)

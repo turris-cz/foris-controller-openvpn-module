@@ -39,10 +39,21 @@ class OpenvpnModule(BaseModule):
     def action_get_status(self, data):
         return self.handler.get_status()
 
+    def action_generate_client(self, data):
+
+        def notify(msg):
+            self.notify("generate_client", msg)
+
+        # notify and exit notify are the same
+        async_id = self.handler.generate_client(data["name"], notify, notify, self.reset_notify)
+
+        return {"task_id": async_id}
+
 
 @wrap_required_functions([
     'generate_ca',
     'get_status',
+    'generate_client',
 ])
 class Handler(object):
     pass

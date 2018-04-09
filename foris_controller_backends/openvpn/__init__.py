@@ -54,6 +54,31 @@ class CaGenAsync(AsyncCommand):
 
         return task_id
 
+    def generate_client(self, name, notify_function, exit_notify_function, reset_notify_function):
+
+        def handler_exit(process_data):
+            exit_notify_function({
+                "task_id": process_data.id,
+                "status": "succeeded" if process_data.get_retval() == 0 else "failed"
+            })
+
+        def gen_handler(status):
+            def handler(matched, process_data):
+                notify_function({"task_id": process_data.id, "status": status})
+            return handler
+
+        task_id = self.start_process(
+            ["/usr/bin/turris-cagen", "switch", "openvpn", "gen_client", name],
+            [
+                (r"^gen_client: started", gen_handler("client_generating")),
+                (r"^gen_client: finished", gen_handler("client_done")),
+            ],
+            handler_exit,
+            reset_notify_function,
+        )
+
+        return task_id
+
 
 class CaGenCmds(BaseCmdLine):
 
