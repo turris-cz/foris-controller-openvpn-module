@@ -36,9 +36,13 @@ class OpenvpnModule(BaseModule):
 
         return {"task_id": async_id}
 
+    def action_get_status(self, data):
+        return self.handler.get_status()
+
 
 @wrap_required_functions([
     'generate_ca',
+    'get_status',
 ])
 class Handler(object):
     pass

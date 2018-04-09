@@ -17,6 +17,7 @@
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #
 
+import os
 import pytest
 import shutil
 
@@ -42,8 +43,65 @@ def empty_certs():
         pass
 
 
+@pytest.fixture(scope="function")
+def generating_certs():
+    try:
+        shutil.rmtree(CERT_PATH, ignore_errors=True)
+    except Exception:
+        pass
+
+    dir_path = os.path.join(CERT_PATH, "openvpn")
+    os.makedirs(dir_path)
+
+    with open(os.path.join(dir_path, "ca"), "w") as f:
+        f.write("1\n")
+        f.flush()
+
+    yield CERT_PATH
+
+    try:
+        shutil.rmtree(CERT_PATH, ignore_errors=True)
+    except Exception:
+        pass
+
+
+@pytest.fixture(scope="function")
+def ready_certs():
+    try:
+        shutil.rmtree(CERT_PATH, ignore_errors=True)
+    except Exception:
+        pass
+
+    dir_path = os.path.join(CERT_PATH, "openvpn")
+    os.makedirs(dir_path)
+
+    with open(os.path.join(dir_path, "ca"), "w") as f:
+        f.write("4\n")
+        f.flush()
+
+    with open(os.path.join(dir_path, "01-turris-server"), "w") as f:
+        f.write("valid\n")
+        f.flush()
+
+    with open(os.path.join(dir_path, "02-client1-client"), "w") as f:
+        f.write("revoked\n")
+        f.flush()
+
+    with open(os.path.join(dir_path, "03-client2-client"), "w") as f:
+        f.write("valid\n")
+        f.flush()
+
+    yield CERT_PATH
+
+    try:
+        shutil.rmtree(CERT_PATH, ignore_errors=True)
+    except Exception:
+        pass
+
+
+
 @pytest.mark.only_backends(['mock'])
-def test_generate_ca(infrastructure, ubusd_test):
+def test_generate_ca_mock(infrastructure, ubusd_test):
     res = infrastructure.process_message({
         "module": "openvpn",
         "action": "generate_ca",
@@ -106,3 +164,65 @@ def test_generate_ca_openwrt(empty_certs, infrastructure, ubusd_test):
     assert new_notifications[-1]["action"] == "generate_ca"
     assert new_notifications[-1]["data"]["status"] == "failed"
     assert new_notifications[-1]["data"]["task_id"] == task_id
+
+
+@pytest.mark.only_backends(['mock'])
+def test_ca_get_status_mock(infrastructure, ubusd_test):
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert "status" in res["data"]
+
+
+@pytest.mark.only_backends(['openwrt'])
+def test_get_status_openwrt_ready(ready_certs, infrastructure, ubusd_test):
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert res == {
+        u"module": u"openvpn",
+        u"action": u"get_status",
+        u"kind": u"reply",
+        u"data": {
+            u"status": u"ready",
+            u"clients": [
+                {u"id": u"02", u"name": u"client1", u"status": u"revoked"},
+                {u"id": u"03", u"name": u"client2", u"status": u"valid"},
+            ],
+        }
+    }
+
+
+@pytest.mark.only_backends(['openwrt'])
+def test_get_status_openwrt_missing(empty_certs, infrastructure, ubusd_test):
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert res == {
+        u"module": u"openvpn",
+        u"action": u"get_status",
+        u"kind": u"reply",
+        u"data": {u"status": "missing", u"clients": []}
+    }
+
+
+@pytest.mark.only_backends(['openwrt'])
+def test_get_status_openwrt_generating(generating_certs, infrastructure, ubusd_test):
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert res == {
+        u"module": u"openvpn",
+        u"action": u"get_status",
+        u"kind": u"reply",
+        u"data": {u"status": u"generating", u"clients": []}
+    }

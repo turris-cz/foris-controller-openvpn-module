@@ -17,16 +17,17 @@
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #
 
+import re
 import logging
 
-from foris_controller_backends.cmdline import AsyncCommand
+from foris_controller_backends.cmdline import AsyncCommand, BaseCmdLine
 
 logger = logging.getLogger(__name__)
 
 
-class CaGen(AsyncCommand):
+class CaGenAsync(AsyncCommand):
 
-    def trigger(self, notify_function, exit_notify_function, reset_notify_function):
+    def generate_ca(self, notify_function, exit_notify_function, reset_notify_function):
 
         def handler_exit(process_data):
             exit_notify_function({
@@ -52,3 +53,38 @@ class CaGen(AsyncCommand):
         )
 
         return task_id
+
+
+class CaGenCmds(BaseCmdLine):
+
+    def get_status(self):
+        output, _ = self._run_command_and_check_retval(
+            ["/usr/bin/turris-cagen-status", "openvpn"], 0)
+        ca_status = re.search(r"^status: (\w+)$", output, re.MULTILINE).group(1)
+        clients = []
+        in_cert_section = False
+        server_cert_found = False
+        for line in output.split("\n"):
+            if in_cert_section:
+                try:
+                    cert_id, cert_type, name, status = line.split(" ")
+                    if cert_type == "client":
+                        clients.append({
+                            "id": cert_id,
+                            "name": name,
+                            "status": status,
+                        })
+                    elif cert_type == "server":
+                        server_cert_found = True
+                except ValueError:
+                    continue
+            if line == "## Certs:":
+                in_cert_section = True
+
+        # if server cert is missing this means that openvpn CA hasn't been generated yet
+        ca_status = "generating" if ca_status == "ready" and not server_cert_found else ca_status
+
+        return {
+            "status": ca_status,
+            "clients": clients,
+        }

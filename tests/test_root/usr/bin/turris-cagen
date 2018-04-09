@@ -1,22 +1,5 @@
 #!/bin/sh
 
-#Copyright 2018 CZ.NIC z.s.p.o. (http://www.nic.cz/)
-#
-#This file as originaly part of NUCI configuration server.
-#
-#cagen is free software: you can redistribute it and/or modify
-#it under the terms of the GNU General Public License as published by
-#the Free Software Foundation, either version 3 of the License, or
-#(at your option) any later version.
-#
-#cagen is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with cagen.  If not, see <http://www.gnu.org/licenses/>.
-
 set -e
 
 SCRIPT="$0"
@@ -84,7 +67,7 @@ do_gen_server() {
 	test_active_ca gen_server
 	SERIAL=$(cat ca)
 	gen_sleep
-	echo active > "$(printf '%02X' $SERIAL)-$1-server"
+	echo valid > "$(printf '%02X' $SERIAL)-$1-server"
 	echo $((SERIAL+1)) > ca
 	msg gen_server "finished ($1)"
 }
@@ -94,7 +77,7 @@ do_gen_client() {
 	test_active_ca gen_client
 	SERIAL=$(cat ca)
 	gen_sleep
-	echo active > "$(printf '%02X' $SERIAL)-$1-client"
+	echo valid > "$(printf '%02X' $SERIAL)-$1-client"
 	echo $((SERIAL+1)) > ca
 	msg gen_client "finished ($1)"
 }

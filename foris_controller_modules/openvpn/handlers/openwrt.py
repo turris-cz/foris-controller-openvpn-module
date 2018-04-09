@@ -22,7 +22,7 @@ import logging
 from foris_controller.handler_base import BaseOpenwrtHandler
 from foris_controller.utils import logger_wrapper
 
-from foris_controller_backends.openvpn import CaGen
+from foris_controller_backends.openvpn import CaGenAsync, CaGenCmds
 
 from .. import Handler
 
@@ -31,8 +31,13 @@ logger = logging.getLogger(__name__)
 
 class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
 
-    ca_gen = CaGen()
+    asynchronuous = CaGenAsync()
+    cmds = CaGenCmds()
 
     @logger_wrapper(logger)
     def generate_ca(self, notify, exit_notify, reset_notify):
-        return self.ca_gen.trigger(notify, exit_notify, reset_notify)
+        return self.asynchronuous.generate_ca(notify, exit_notify, reset_notify)
+
+    @logger_wrapper(logger)
+    def get_status(self):
+        return self.cmds.get_status()

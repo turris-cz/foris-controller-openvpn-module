@@ -30,8 +30,16 @@ logger = logging.getLogger(__name__)
 
 class MockOpenvpnHandler(Handler, BaseMockHandler):
     ca_generated = False
+    clients = []
 
     @logger_wrapper(logger)
     def generate_ca(self, notify, exit_notify, reset_notify):
         MockOpenvpnHandler.ca_generated = True
         return "%032X" % random.randrange(2**32)
+
+    @logger_wrapper(logger)
+    def get_status(self):
+        return {
+            "status": "ready" if MockOpenvpnHandler.ca_generated else "missing",
+            "clients": MockOpenvpnHandler.clients,
+        }

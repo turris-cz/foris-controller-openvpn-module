@@ -1,4 +1,8 @@
 {
+    "definitions": {
+        "openvpn_cert_id": {"type": "string", "pattern": "^([0-9a-fA-F][0-9a-fA-F])+$"},
+        "openvpn_cert_name": {"type": "string", "pattern": "^[a-zA-Z0-9_.-]+$"}
+    },
     "oneOf": [
         {
             "description": "Request to generate CA (asynchronously)",
@@ -41,6 +45,47 @@
                     },
                     "additionalProperties": false,
                     "required": ["task_id", "status"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Request to obtain info about openvpn CA",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["request"]},
+                "action": {"enum": ["get_status"]}
+            },
+            "additionalProperties": false
+        },
+        {
+
+            "description": "Reply to obtain info about openvpn CA",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["reply"]},
+                "action": {"enum": ["get_status"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "status": {"enum": ["ready", "missing", "generating"]},
+                        "clients": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"$ref": "#/definitions/openvpn_cert_id"},
+                                    "name": {"$ref": "#/definitions/openvpn_cert_name"},
+                                    "status": {"enum": ["valid", "revoked", "expired"]}
+                                },
+                                "required": ["id", "name", "status"],
+                                "additionalProperties": false
+                            }
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": ["status", "clients"]
                 }
             },
             "additionalProperties": false,
