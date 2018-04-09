@@ -55,3 +55,11 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
         MockOpenvpnHandler.current_id += 1
 
         return "%08X" % random.randrange(2**32)
+
+    @logger_wrapper(logger)
+    def revoke(self, cert_id):
+        for client in MockOpenvpnHandler.clients:
+            if client["id"] == cert_id:
+                client["status"] = "revoked"
+                return True
+        return False

@@ -97,9 +97,17 @@ do_revoke() {
 	msg revoke "started ($1)"
 	test_active_ca revoke
 	gen_sleep
+	local revoked="no"
 	for file in "${1}"-* ; do
-		echo revoked > "$file"
+		if [ -f "$file" ]; then
+			echo revoked > "$file"
+			revoked="true"
+		fi
 	done
+	if [ "$revoked" = "no" ]; then
+		msg revoke "client id '$1' was not found"
+		exit 1
+	fi
 	msg revoke "finished ($1)"
 }
 

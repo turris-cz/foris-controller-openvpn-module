@@ -49,11 +49,18 @@ class OpenvpnModule(BaseModule):
 
         return {"task_id": async_id}
 
+    def action_revoke(self, data):
+        res = self.handler.revoke(data["id"])
+        if res:
+            self.notify("revoke", {"id": data["id"]})
+        return {"result": res}
+
 
 @wrap_required_functions([
     'generate_ca',
     'get_status',
     'generate_client',
+    'revoke',
 ])
 class Handler(object):
     pass

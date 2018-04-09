@@ -113,3 +113,9 @@ class CaGenCmds(BaseCmdLine):
             "status": ca_status,
             "clients": clients,
         }
+
+    def revoke(self, cert_id):
+        retval, _, _ = self._run_command(
+            "/usr/bin/turris-cagen", "switch", "openvpn", "revoke", cert_id
+        )
+        return retval == 0

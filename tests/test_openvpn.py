@@ -367,3 +367,116 @@ def test_generate_client_name_failed(empty_certs, infrastructure, ubusd_test):
     wrong_name("aaa%")
     wrong_name("bbb$")
     wrong_name("ccc!")
+
+
+@pytest.mark.only_backends(['mock'])
+def test_revoke_mock(infrastructure, ubusd_test):
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "generate_client",
+        "kind": "request",
+        "data": {"name": "new.client_to_revoke"},
+    })
+    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert "task_id" in res["data"]
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert "data" in res
+    assert "clients" in res["data"]
+    assert res["data"]["clients"][-1]["name"] == "new.client_to_revoke"
+    id_to_revoke = res["data"]["clients"][-1]["id"]
+
+    filters = [("openvpn", "revoke")]
+
+    # successful generation
+    notifications = infrastructure.get_notifications(filters=filters)
+
+    # existing
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "revoke",
+        "kind": "request",
+        "data": {"id": id_to_revoke},
+    })
+    assert "result" in res["data"]
+    assert res["data"]["result"] is True
+
+    notifications = infrastructure.get_notifications(notifications, filters=filters)
+    assert notifications[-1] == {
+        u"module": u"openvpn",
+        u"action": u"revoke",
+        u"kind": u"notification",
+        u"data": {u"id": id_to_revoke},
+    }
+
+    # non-existing
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "revoke",
+        "kind": "request",
+        "data": {"id": "FF"},
+    })
+    assert "result" in res["data"]
+    assert res["data"]["result"] is False
+
+
+@pytest.mark.only_backends(['openwrt'])
+def test_revoke_openwrt_ready(ready_certs, infrastructure, ubusd_test):
+    filters = [("openvpn", "revoke")]
+
+    # successful generation
+    notifications = infrastructure.get_notifications(filters=filters)
+
+    # existing
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "revoke",
+        "kind": "request",
+        "data": {"id": "03"},
+    })
+    assert "result" in res["data"]
+    assert res["data"]["result"] is True
+
+    notifications = infrastructure.get_notifications(notifications, filters=filters)
+    assert notifications[-1] == {
+        u"module": u"openvpn",
+        u"action": u"revoke",
+        u"kind": u"notification",
+        u"data": {u"id": "03"},
+    }
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert "data" in res
+    assert "clients" in res["data"]
+    matched = [e for e in res["data"]["clients"] if e["id"] == "03"][0]
+    assert matched["status"] == "revoked"
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "revoke",
+        "kind": "request",
+        "data": {"id": "FF"},
+    })
+    assert "result" in res["data"]
+    assert res["data"]["result"] is False
+
+
+@pytest.mark.only_backends(['openwrt'])
+def test_revoke_openwrt_missing(empty_certs, infrastructure, ubusd_test):
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "revoke",
+        "kind": "request",
+        "data": {"id": "03"},
+    })
+    assert "result" in res["data"]
+    assert res["data"]["result"] is False

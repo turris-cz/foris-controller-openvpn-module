@@ -45,3 +45,7 @@ class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
     @logger_wrapper(logger)
     def generate_client(self, name, notify, exit_notify, reset_notify):
         return self.asynchronuous.generate_client(name, notify, exit_notify, reset_notify)
+
+    @logger_wrapper(logger)
+    def revoke(self, cert_id):
+        return self.cmds.revoke(cert_id)
