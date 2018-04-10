@@ -480,3 +480,32 @@ def test_revoke_openwrt_missing(empty_certs, infrastructure, ubusd_test):
     })
     assert "result" in res["data"]
     assert res["data"]["result"] is False
+
+
+def test_delete_ca(ready_certs, infrastructure, ubusd_test):
+    filters = [("openvpn", "delete_ca")]
+
+    notifications = infrastructure.get_notifications(filters=filters)
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "delete_ca",
+        "kind": "request",
+    })
+    assert "data" in res
+    assert "result" in res["data"]
+    assert res["data"]["result"] is True
+
+    notifications = infrastructure.get_notifications(notifications, filters=filters)
+    assert notifications[-1] == {
+        u"module": u"openvpn",
+        u"action": u"delete_ca",
+        u"kind": u"notification",
+    }
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert "status" in res["data"]
+    assert res["data"]["status"] == "missing"

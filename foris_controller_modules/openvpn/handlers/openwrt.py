@@ -49,3 +49,7 @@ class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
     @logger_wrapper(logger)
     def revoke(self, cert_id):
         return self.cmds.revoke(cert_id)
+
+    @logger_wrapper(logger)
+    def delete_ca(self):
+        return self.cmds.delete_ca()

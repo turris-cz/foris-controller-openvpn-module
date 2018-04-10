@@ -55,12 +55,19 @@ class OpenvpnModule(BaseModule):
             self.notify("revoke", {"id": data["id"]})
         return {"result": res}
 
+    def action_delete_ca(self, data):
+        res = self.handler.delete_ca()
+        if res:
+            self.notify("delete_ca")
+        return {"result": res}
+
 
 @wrap_required_functions([
     'generate_ca',
     'get_status',
     'generate_client',
     'revoke',
+    'delete_ca',
 ])
 class Handler(object):
     pass

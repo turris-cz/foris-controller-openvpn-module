@@ -63,3 +63,10 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
                 client["status"] = "revoked"
                 return True
         return False
+
+    @logger_wrapper(logger)
+    def delete_ca(self):
+        MockOpenvpnHandler.ca_generated = False
+        MockOpenvpnHandler.clients = []
+        MockOpenvpnHandler.current_id = 2
+        return True

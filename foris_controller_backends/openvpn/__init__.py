@@ -119,3 +119,7 @@ class CaGenCmds(BaseCmdLine):
             "/usr/bin/turris-cagen", "switch", "openvpn", "revoke", cert_id
         )
         return retval == 0
+
+    def delete_ca(self):
+        retval, _, _ = self._run_command("/usr/bin/turris-cagen", "drop_ca", "openvpn")
+        return retval == 0
