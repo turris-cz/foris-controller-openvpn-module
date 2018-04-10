@@ -32,6 +32,19 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
     ca_generated = False
     clients = []
     current_id = 2
+    settings = {
+        "enabled": False,
+        "network": "10.111.111.0",
+        "network_netmask": "255.255.255.0",
+        "routes": [
+            {"network": "192.168.1.1", "netmask": "255.255.255.0"}
+        ],
+        "device": "tun_turris",
+        "protocol": "udp",
+        "port": 1194,
+        "route_all": False,
+        "use_dns": False,
+    }
 
     @logger_wrapper(logger)
     def generate_ca(self, notify, exit_notify, reset_notify):
@@ -70,3 +83,7 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
         MockOpenvpnHandler.clients = []
         MockOpenvpnHandler.current_id = 2
         return True
+
+    @logger_wrapper(logger)
+    def get_settings(self):
+        return MockOpenvpnHandler.settings

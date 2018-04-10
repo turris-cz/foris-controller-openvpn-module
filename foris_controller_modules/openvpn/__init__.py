@@ -61,6 +61,9 @@ class OpenvpnModule(BaseModule):
             self.notify("delete_ca")
         return {"result": res}
 
+    def action_get_settings(self, data):
+        return self.handler.get_settings()
+
 
 @wrap_required_functions([
     'generate_ca',
@@ -68,6 +71,7 @@ class OpenvpnModule(BaseModule):
     'generate_client',
     'revoke',
     'delete_ca',
+    'get_settings',
 ])
 class Handler(object):
     pass

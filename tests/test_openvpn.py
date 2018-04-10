@@ -22,7 +22,7 @@ import pytest
 import shutil
 
 from foris_controller_testtools.fixtures import (
-    backend, infrastructure, ubusd_test, only_backends
+    backend, infrastructure, ubusd_test, only_backends, uci_configs_init
 )
 
 CERT_PATH = "/tmp/test-cagen/"
@@ -509,3 +509,15 @@ def test_delete_ca(ready_certs, infrastructure, ubusd_test):
     })
     assert "status" in res["data"]
     assert res["data"]["status"] == "missing"
+
+
+def test_get_settings(uci_configs_init, infrastructure, ubusd_test):
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_settings",
+        "kind": "request",
+    })
+    assert set(res["data"].keys()) == {
+        u"enabled", u"network", u"network_netmask", u"device", u"protocol", u"port", u"routes",
+        u"route_all", u"use_dns",
+    }

@@ -21,6 +21,9 @@ import re
 import logging
 
 from foris_controller_backends.cmdline import AsyncCommand, BaseCmdLine
+from foris_controller_backends.uci import (
+    UciBackend, get_option_named, parse_bool, UciRecordNotFound, UciException
+)
 
 logger = logging.getLogger(__name__)
 
@@ -123,3 +126,54 @@ class CaGenCmds(BaseCmdLine):
     def delete_ca(self):
         retval, _, _ = self._run_command("/usr/bin/turris-cagen", "drop_ca", "openvpn")
         return retval == 0
+
+
+class OpenvpnUci(object):
+    DEFAULTS = {
+        "enabled": False,
+        "network": "10.111.111.0",
+        "network_netmask": "255.255.255.0",
+        "routes": [
+        ],
+        "device": "",
+        "protocol": "",
+        "port": 1194,
+        "route_all": False,
+        "use_dns": False,
+    }
+
+    def get_settings(self):
+        with UciBackend() as backend:
+            data = backend.read("openvpn")
+
+        try:
+            enabled = parse_bool(get_option_named(data, "openvpn", "server_turris", "enabled", "0"))
+            network, network_netmask = get_option_named(
+                data, "openvpn", "server_turris", "server", "10.111.111.0 255.255.255.0").split()
+            push_options = get_option_named(data, "openvpn", "server_turris", "push", [])
+            routes = [
+                dict(zip(("network", "netmask"), e.split()[1:]))  # `route <network> <netmask>`
+                for e in push_options if e.startswith("route ")
+            ]
+            device = get_option_named(data, "openvpn", "server_turris", "device", "")
+            protocol = get_option_named(data, "openvpn", "server_turris", "proto", "")
+            port = int(get_option_named(data, "openvpn", "server_turris", "port", "0"))
+            use_dns = True if [e for e in push_options if e.startswith("dhcp-option DNS")] \
+                else False
+            route_all = True if [e for e in push_options if e == "redirect-gateway def1"] \
+                else False
+
+        except UciException:
+            return OpenvpnUci.DEFAULTS
+
+        return {
+            "enabled": enabled,
+            "network": network,
+            "network_netmask": network_netmask,
+            "routes": routes,
+            "device": device,
+            "protocol": protocol,
+            "port": port,
+            "route_all": route_all,
+            "use_dns": use_dns,
+        }

@@ -236,6 +236,52 @@
                 "action": {"enum": ["delete_ca"]}
             },
             "additionalProperties": false
+        },
+        {
+            "description": "Request to get openvpn settings",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["request"]},
+                "action": {"enum": ["get_settings"]}
+            },
+            "additionalProperties": false
+        },
+        {
+            "description": "Reply to get openvpn settings",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["reply"]},
+                "action": {"enum": ["get_settings"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {"type": "boolean"},
+                        "network": {"format": "ipv4", "type": "string"},
+                        "network_netmask": { "format": "ipv4", "type": "string"},
+                        "routes": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "network": {"format": "ipv4", "type": "string"},
+                                    "netmask": {"format": "ipv4", "type": "string"}
+                                },
+                                "additionalProperties": false,
+                                "required": ["network", "netmask"]
+                            }
+                        },
+                        "device": {"type": "string"},
+                        "protocol": {"enum": ["", "udp", "tcp-client", "tcp-server"]},
+                        "port": {"type": "integer", "minimum": 0, "maximum": 65535},
+                        "route_all": {"type": "boolean"},
+                        "use_dns": {"type": "boolean"}
+                    },
+                    "additionalProperties": false,
+                    "required": ["enabled", "network", "network_netmask", "routes"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
         }
     ]
 }
