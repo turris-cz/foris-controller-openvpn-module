@@ -1,7 +1,7 @@
 {
     "definitions": {
         "openvpn_cert_id": {"type": "string", "pattern": "^([0-9a-fA-F][0-9a-fA-F])+$"},
-        "openvpn_cert_name": {"type": "string", "pattern": "^[a-zA-Z0-9_.-]+$"}
+        "openvpn_cert_name": {"type": "string", "pattern": "^[a-zA-Z0-9_.-]{1,64}$"}
     },
     "oneOf": [
         {
