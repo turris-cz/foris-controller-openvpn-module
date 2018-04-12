@@ -165,7 +165,6 @@
             "required": ["data"]
         },
         {
-
             "description": "Reply to revoke client cert",
             "properties": {
                 "module": {"enum": ["openvpn"]},
@@ -277,7 +276,96 @@
                         "use_dns": {"type": "boolean"}
                     },
                     "additionalProperties": false,
-                    "required": ["enabled", "network", "network_netmask", "routes"]
+                    "required": [
+                        "enabled", "network", "network_netmask", "routes", "device", "port", "protocol",
+                        "route_all", "use_dns"
+                    ]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Request to update openvpn settings",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["request"]},
+                "action": {"enum": ["update_settings"]},
+                "data": {
+                    "oneOf": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {"enum": [true]},
+                                "network": {"format": "ipv4", "type": "string"},
+                                "network_netmask": { "format": "ipv4", "type": "string"},
+                                "route_all": {"type": "boolean"},
+                                "use_dns": {"type": "boolean"}
+                            },
+                            "additionalProperties": false,
+                            "required": ["enabled", "network", "network_netmask", "route_all", "use_dns"]
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {"enum": [false]}
+                            },
+                            "additionalProperties": false,
+                            "required": ["enabled"]
+                        }
+                    ]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Reply to update openvpn settings",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["reply"]},
+                "action": {"enum": ["update_settings"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "result": {"type": "boolean"}
+                    },
+                    "additionalProperties": false,
+                    "required": ["result"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Notification that openvpn settings were updated",
+            "properties": {
+                "module": {"enum": ["openvpn"]},
+                "kind": {"enum": ["notification"]},
+                "action": {"enum": ["update_settings"]},
+                "data": {
+                    "oneOf": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {"enum": [true]},
+                                "network": {"format": "ipv4", "type": "string"},
+                                "network_netmask": { "format": "ipv4", "type": "string"},
+                                "route_all": {"type": "boolean"},
+                                "use_dns": {"type": "boolean"}
+                            },
+                            "additionalProperties": false,
+                            "required": ["enabled", "network", "network_netmask", "route_all", "use_dns"]
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {"enum": [false]}
+                            },
+                            "additionalProperties": false,
+                            "required": ["enabled"]
+                        }
+                    ]
                 }
             },
             "additionalProperties": false,

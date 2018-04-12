@@ -37,7 +37,7 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
         "network": "10.111.111.0",
         "network_netmask": "255.255.255.0",
         "routes": [
-            {"network": "192.168.1.1", "netmask": "255.255.255.0"}
+            {"network": "192.168.1.0", "netmask": "255.255.255.0"}
         ],
         "device": "tun_turris",
         "protocol": "udp",
@@ -87,3 +87,16 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
     @logger_wrapper(logger)
     def get_settings(self):
         return MockOpenvpnHandler.settings
+
+    @logger_wrapper(logger)
+    def update_settings(
+        self, enabled, network=None, network_netmask=None, route_all=None, use_dns=None
+    ):
+        MockOpenvpnHandler.settings["enabled"] = enabled
+        if enabled:
+            MockOpenvpnHandler.settings["network"] = network
+            MockOpenvpnHandler.settings["network_netmask"] = network_netmask
+            MockOpenvpnHandler.settings["route_all"] = route_all
+            MockOpenvpnHandler.settings["use_dns"] = use_dns
+
+        return True

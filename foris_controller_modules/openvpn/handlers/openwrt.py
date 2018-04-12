@@ -58,3 +58,9 @@ class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
     @logger_wrapper(logger)
     def get_settings(self):
         return self.uci.get_settings()
+
+    @logger_wrapper(logger)
+    def update_settings(
+        self, enabled, network=None, network_netmask=None, route_all=None, use_dns=None
+    ):
+        return self.uci.update_settings(enabled, network, network_netmask, route_all, use_dns)
