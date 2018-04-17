@@ -22,7 +22,7 @@ import logging
 from foris_controller.handler_base import BaseOpenwrtHandler
 from foris_controller.utils import logger_wrapper
 
-from foris_controller_backends.openvpn import CaGenAsync, CaGenCmds, OpenvpnUci
+from foris_controller_backends.openvpn import CaGenAsync, CaGenCmds, OpenvpnUci, OpenvpnFiles
 
 from .. import Handler
 
@@ -34,6 +34,7 @@ class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
     asynchronuous = CaGenAsync()
     cmds = CaGenCmds()
     uci = OpenvpnUci()
+    files = OpenvpnFiles()
 
     @logger_wrapper(logger)
     def generate_ca(self, notify, exit_notify, reset_notify):
@@ -64,3 +65,17 @@ class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
         self, enabled, network=None, network_netmask=None, route_all=None, use_dns=None
     ):
         return self.uci.update_settings(enabled, network, network_netmask, route_all, use_dns)
+
+    @logger_wrapper(logger)
+    def get_client_config(self, id, hostname=None):
+        filtered = [e for e in self.cmds.get_status()["clients"] if e["id"] == id]
+        if not filtered:
+            return {"status": "not_found"}
+        if filtered[0]["status"] == "revoked":
+            return {"status": "revoked"}
+
+        options = self.uci.get_options_for_client()
+        return {
+            "status": "valid",
+            "config": self.files.get_config(id=id, hostname=hostname, **options)
+        }

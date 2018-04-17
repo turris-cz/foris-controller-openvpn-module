@@ -23,12 +23,11 @@ import shutil
 
 from foris_controller_testtools.fixtures import (
     backend, infrastructure, ubusd_test, only_backends, uci_configs_init,
-    init_script_result, lock_backend,
+    init_script_result, lock_backend, file_root_init
 )
 from foris_controller_testtools.utils import match_subdict, check_service_result, get_uci_module
 
 CERT_PATH = "/tmp/test-cagen/"
-
 
 @pytest.fixture(scope="function")
 def empty_certs():
@@ -749,3 +748,131 @@ def test_update_settings_openwrt(
     assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "enabled")) is False
     assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "enabled")) is False
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "enabled")) is False
+
+
+@pytest.mark.only_backends(['mock'])
+@pytest.mark.parametrize("hostname", ["", "10.20.30.40"])
+def test_get_client_config_mock(infrastructure, hostname, ubusd_test):
+    query_data = {"hostname": hostname} if hostname else {}
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "generate_ca",
+        "kind": "request",
+    })
+    assert "errors" not in res["data"]
+
+    query_data["id"] = "FF"
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": query_data,
+    })
+    assert {"status"} == set(res["data"].keys())
+    assert res["data"]["status"] == "not_found"
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "generate_client",
+        "kind": "request",
+        "data": {"name": "get_client_config"},
+    })
+    assert "errors" not in res["data"]
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "request",
+    })
+    assert "errors" not in res["data"]
+    assert res["data"]["clients"][-1]["name"] == "get_client_config"
+    client = res["data"]["clients"][-1]
+
+    query_data["id"] = client["id"]
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": query_data,
+    })
+    assert {"status", "config"} == set(res["data"].keys())
+    assert res["data"]["status"] == "valid"
+    if hostname:
+        assert hostname in res["data"]["config"]
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "revoke",
+        "kind": "request",
+        "data": {"id": client["id"]},
+    })
+    assert "result" in res["data"]
+    assert res["data"]["result"] is True
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": query_data,
+    })
+    assert {"status"} == set(res["data"].keys())
+    assert res["data"]["status"] == "revoked"
+
+
+@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.parametrize("hostname", ["", "10.30.50.70"])
+def test_get_client_config_openwrt(
+    ready_certs, uci_configs_init, init_script_result, lock_backend, infrastructure, ubusd_test,
+    hostname, file_root_init
+):
+    query_data = {"hostname": hostname} if hostname else {}
+
+    query_data["id"] = "FF"
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": query_data,
+    })
+    assert {"status"} == set(res["data"].keys())
+    assert res["data"]["status"] == "not_found"
+
+    query_data["id"] = "02"
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": query_data,
+    })
+    assert {"status"} == set(res["data"].keys())
+    assert res["data"]["status"] == "revoked"
+
+    query_data["id"] = "03"
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": query_data,
+    })
+    assert {"status", "config"} == set(res["data"].keys())
+    assert res["data"]["status"] == "valid"
+    if hostname:
+        assert hostname in res["data"]["config"]
+    assert "dev tun_turris" in res["data"]["config"]
+    assert "proto udp" in res["data"]["config"]
+    assert "<ca>" in res["data"]["config"]
+    assert "</ca>" in res["data"]["config"]
+    assert "<cert>" in res["data"]["config"]
+    assert "</cert>" in res["data"]["config"]
+    assert "<key>" in res["data"]["config"]
+    assert "</key>" in res["data"]["config"]
+
+    # Following lines regards other options which might be set in the future
+    ## tls-auth
+    # if tls_auth_used:
+    #    assert "key-direction 1" in res["config"]
+    #    assert "<tls-auth>" in res["data"]["config"]
+    #    assert "</tls-auth>" in res["data"]["config"]
+    # if custom_cipher:
+    #    assert "cipher %s" % custom_cipher in res["data"]["config"]
+    # if comp_lzo_used:
+    #    assert "comp-lzo" in res["data"]["config"]

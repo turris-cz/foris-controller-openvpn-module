@@ -100,3 +100,12 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
             MockOpenvpnHandler.settings["use_dns"] = use_dns
 
         return True
+
+    @logger_wrapper(logger)
+    def get_client_config(self, id, hostname=None):
+        filtered = [e for e in MockOpenvpnHandler.clients if e["id"] == id]
+        if not filtered:
+            return {"status": "not_found"}
+        if filtered[0]["status"] == "revoked":
+            return {"status": "revoked"}
+        return {"status": "valid", "config": "%s" % hostname if hostname else "<guessed_hostname>"}

@@ -23,7 +23,7 @@ import os
 # load common fixtures
 from foris_controller_testtools.fixtures import (
     ubusd_acl_path, uci_config_default_path, cmdline_script_root,
-    controller_modules, extra_module_paths, message_bus, backend
+    controller_modules, extra_module_paths, message_bus, backend, file_root
 )
 
 
@@ -50,6 +50,12 @@ def cmdline_script_root():
 def controller_modules():
     return ["openvpn"]
 
+@pytest.fixture(scope="session")
+def file_root():
+    # default src dirctory will be the same as for the scripts  (could be override later)
+    return os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "test_files"
+    )
 
 def pytest_addoption(parser):
     parser.addoption(
