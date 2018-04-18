@@ -41,6 +41,7 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
         ],
         "device": "tun_turris",
         "protocol": "udp",
+        "server_hostname": "",
         "port": 1194,
         "route_all": False,
         "use_dns": False,
@@ -104,6 +105,7 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
     @logger_wrapper(logger)
     def get_client_config(self, id, hostname=None):
         filtered = [e for e in MockOpenvpnHandler.clients if e["id"] == id]
+        MockOpenvpnHandler.settings["server_hostname"] = hostname if hostname else ""
         if not filtered:
             return {"status": "not_found"}
         if filtered[0]["status"] == "revoked":

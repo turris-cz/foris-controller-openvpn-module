@@ -520,7 +520,7 @@ def test_get_settings(uci_configs_init, infrastructure, ubusd_test):
     })
     assert set(res["data"].keys()) == {
         u"enabled", u"network", u"network_netmask", u"device", u"protocol", u"port", u"routes",
-        u"route_all", u"use_dns",
+        u"route_all", u"use_dns", u"server_hostname"
     }
 
 
@@ -753,6 +753,15 @@ def test_update_settings_openwrt(
 @pytest.mark.only_backends(['mock'])
 @pytest.mark.parametrize("hostname", ["", "10.20.30.40"])
 def test_get_client_config_mock(infrastructure, hostname, ubusd_test):
+    def check_hostname(server_hostname):
+        if server_hostname:
+            res = infrastructure.process_message({
+                "module": "openvpn",
+                "action": "get_settings",
+                "kind": "request",
+            })
+            assert res["data"]["server_hostname"] == server_hostname
+
     query_data = {"hostname": hostname} if hostname else {}
     res = infrastructure.process_message({
         "module": "openvpn",
@@ -770,6 +779,7 @@ def test_get_client_config_mock(infrastructure, hostname, ubusd_test):
     })
     assert {"status"} == set(res["data"].keys())
     assert res["data"]["status"] == "not_found"
+    check_hostname(hostname)
 
     res = infrastructure.process_message({
         "module": "openvpn",
@@ -796,6 +806,7 @@ def test_get_client_config_mock(infrastructure, hostname, ubusd_test):
     })
     assert {"status", "config"} == set(res["data"].keys())
     assert res["data"]["status"] == "valid"
+    check_hostname(hostname)
     if hostname:
         assert hostname in res["data"]["config"]
 
@@ -816,6 +827,7 @@ def test_get_client_config_mock(infrastructure, hostname, ubusd_test):
     })
     assert {"status"} == set(res["data"].keys())
     assert res["data"]["status"] == "revoked"
+    check_hostname(hostname)
 
 
 @pytest.mark.only_backends(['openwrt'])
@@ -824,6 +836,15 @@ def test_get_client_config_openwrt(
     ready_certs, uci_configs_init, init_script_result, lock_backend, infrastructure, ubusd_test,
     hostname, file_root_init
 ):
+    def check_hostname(server_hostname):
+        if server_hostname:
+            res = infrastructure.process_message({
+                "module": "openvpn",
+                "action": "get_settings",
+                "kind": "request",
+            })
+            assert res["data"]["server_hostname"] == server_hostname
+
     query_data = {"hostname": hostname} if hostname else {}
 
     query_data["id"] = "FF"
@@ -835,6 +856,7 @@ def test_get_client_config_openwrt(
     })
     assert {"status"} == set(res["data"].keys())
     assert res["data"]["status"] == "not_found"
+    check_hostname(hostname)
 
     query_data["id"] = "02"
     res = infrastructure.process_message({
@@ -845,6 +867,7 @@ def test_get_client_config_openwrt(
     })
     assert {"status"} == set(res["data"].keys())
     assert res["data"]["status"] == "revoked"
+    check_hostname(hostname)
 
     query_data["id"] = "03"
     res = infrastructure.process_message({
@@ -855,6 +878,7 @@ def test_get_client_config_openwrt(
     })
     assert {"status", "config"} == set(res["data"].keys())
     assert res["data"]["status"] == "valid"
+    check_hostname(hostname)
     if hostname:
         assert hostname in res["data"]["config"]
     assert "dev tun_turris" in res["data"]["config"]

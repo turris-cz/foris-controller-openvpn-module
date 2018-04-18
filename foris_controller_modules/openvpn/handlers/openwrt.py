@@ -69,6 +69,7 @@ class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
     @logger_wrapper(logger)
     def get_client_config(self, id, hostname=None):
         filtered = [e for e in self.cmds.get_status()["clients"] if e["id"] == id]
+        self.uci.update_server_hostname(hostname)  # update hostname in foris uci
         if not filtered:
             return {"status": "not_found"}
         if filtered[0]["status"] == "revoked":

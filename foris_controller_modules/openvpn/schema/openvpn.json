@@ -272,13 +272,14 @@
                         "device": {"type": "string"},
                         "protocol": {"enum": ["", "udp", "tcp-client", "tcp-server"]},
                         "port": {"type": "integer", "minimum": 0, "maximum": 65535},
+                        "server_hostname": {"type": "string"},
                         "route_all": {"type": "boolean"},
                         "use_dns": {"type": "boolean"}
                     },
                     "additionalProperties": false,
                     "required": [
                         "enabled", "network", "network_netmask", "routes", "device", "port", "protocol",
-                        "route_all", "use_dns"
+                        "route_all", "use_dns", "server_hostname"
                     ]
                 }
             },

@@ -150,6 +150,7 @@ class OpenvpnUci(object):
     def get_settings(self):
         with UciBackend() as backend:
             data = backend.read("openvpn")
+            foris_data = backend.read("foris")
 
         try:
             enabled = parse_bool(get_option_named(data, "openvpn", "server_turris", "enabled", "0"))
@@ -167,6 +168,8 @@ class OpenvpnUci(object):
                 else False
             route_all = True if [e for e in push_options if e == "redirect-gateway def1"] \
                 else False
+            server_hostname = get_option_named(
+                foris_data, "foris", "openvpn_plugin", "server_address", "")
 
         except UciException:
             return OpenvpnUci.DEFAULTS
@@ -181,6 +184,7 @@ class OpenvpnUci(object):
             "port": port,
             "route_all": route_all,
             "use_dns": use_dns,
+            "server_hostname": server_hostname,
         }
 
     def update_settings(
@@ -286,6 +290,17 @@ class OpenvpnUci(object):
             services.restart("openvpn")
 
         return True
+
+    def update_server_hostname(self, server_hostname):
+        with UciBackend() as backend:
+            try:
+                if server_hostname:
+                    backend.add_section("foris", "config", "openvpn_plugin")
+                    backend.set_option("foris", "openvpn_plugin", "server_address", server_hostname)
+                else:
+                    backend.del_option("foris", "openvpn_plugin", "server_address")
+            except UciException:
+                pass  # best effort (foris doesn't need to be installed...)
 
     def get_options_for_client(self):
         with UciBackend() as backend:
