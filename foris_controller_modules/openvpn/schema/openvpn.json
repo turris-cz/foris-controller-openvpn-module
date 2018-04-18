@@ -77,7 +77,7 @@
                                 "properties": {
                                     "id": {"$ref": "#/definitions/openvpn_cert_id"},
                                     "name": {"$ref": "#/definitions/openvpn_cert_name"},
-                                    "status": {"enum": ["valid", "revoked", "expired"]}
+                                    "status": {"enum": ["valid", "revoked", "expired", "generating"]}
                                 },
                                 "required": ["id", "name", "status"],
                                 "additionalProperties": false

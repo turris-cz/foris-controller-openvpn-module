@@ -92,6 +92,10 @@ def ready_certs():
         f.write("valid\n")
         f.flush()
 
+    with open(os.path.join(dir_path, "04-client3-client"), "w") as f:
+        f.write("generating\n")
+        f.flush()
+
     yield CERT_PATH
 
     try:
@@ -194,6 +198,7 @@ def test_get_status_openwrt_ready(ready_certs, infrastructure, ubusd_test):
             u"clients": [
                 {u"id": u"02", u"name": u"client1", u"status": u"revoked"},
                 {u"id": u"03", u"name": u"client2", u"status": u"valid"},
+                {u"id": u"04", u"name": u"client3", u"status": u"generating"},
             ],
         }
     }
