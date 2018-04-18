@@ -67,12 +67,13 @@ class CaGenAsync(AsyncCommand):
         def handler_exit(process_data):
             exit_notify_function({
                 "task_id": process_data.id,
+                "name": name,
                 "status": "succeeded" if process_data.get_retval() == 0 else "failed"
             })
 
         def gen_handler(status):
             def handler(matched, process_data):
-                notify_function({"task_id": process_data.id, "status": status})
+                notify_function({"task_id": process_data.id, "status": status, "name": name})
             return handler
 
         task_id = self.start_process(

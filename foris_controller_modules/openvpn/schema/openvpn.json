@@ -137,6 +137,7 @@
                     "type": "object",
                     "properties": {
                         "task_id": {"type": "string"},
+                        "name": {"$ref": "#/definitions/openvpn_cert_name"},
                         "status": {"enum": ["succeeded", "failed", "client_generating", "client_done"]}
                     },
                     "additionalProperties": false,

@@ -291,12 +291,15 @@ def test_generate_client_openwrt_success(ready_certs, infrastructure, ubusd_test
         new_notifications = infrastructure.get_notifications(new_notifications, filters=filters)
 
     assert new_notifications[-3]["action"] == "generate_client"
+    assert new_notifications[-3]["data"]["name"] == "new.client_1"
     assert new_notifications[-3]["data"]["status"] == "client_generating"
     assert new_notifications[-3]["data"]["task_id"] == task_id
     assert new_notifications[-2]["action"] == "generate_client"
+    assert new_notifications[-2]["data"]["name"] == "new.client_1"
     assert new_notifications[-2]["data"]["status"] == "client_done"
     assert new_notifications[-2]["data"]["task_id"] == task_id
     assert new_notifications[-1]["action"] == "generate_client"
+    assert new_notifications[-1]["data"]["name"] == "new.client_1"
     assert new_notifications[-1]["data"]["status"] == "succeeded"
     assert new_notifications[-1]["data"]["task_id"] == task_id
 
@@ -331,7 +334,7 @@ def test_generate_client_openwrt_failed(empty_certs, infrastructure, ubusd_test)
         "module": "openvpn",
         "action": "generate_client",
         "kind": "request",
-        "data": {"name": "new.client_1"},
+        "data": {"name": "new.client_2"},
     })
     assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
     assert "task_id" in res["data"]
@@ -342,6 +345,7 @@ def test_generate_client_openwrt_failed(empty_certs, infrastructure, ubusd_test)
         new_notifications = infrastructure.get_notifications(new_notifications, filters=filters)
 
     assert new_notifications[-1]["action"] == "generate_client"
+    assert new_notifications[-1]["data"]["name"] == "new.client_2"
     assert new_notifications[-1]["data"]["status"] == "failed"
     assert new_notifications[-1]["data"]["task_id"] == task_id
 
