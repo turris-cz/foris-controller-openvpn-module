@@ -223,10 +223,12 @@ class OpenvpnUci(object):
                     "firewall", "vpn_turris_forward_lan_in", "enabled", store_bool(True))
                 backend.set_option("firewall", "vpn_turris_forward_lan_in", "src", "vpn_turris")
                 backend.set_option("firewall", "vpn_turris_forward_lan_in", "dest", "lan")
+                backend.add_section("firewall", "forwarding", "vpn_turris_forward_lan_out")
                 backend.set_option(
                     "firewall", "vpn_turris_forward_lan_out", "enabled", store_bool(True))
                 backend.set_option("firewall", "vpn_turris_forward_lan_out", "src", "lan")
                 backend.set_option("firewall", "vpn_turris_forward_lan_out", "dest", "vpn_turris")
+                backend.add_section("firewall", "forwarding", "vpn_turris_forward_wan_out")
                 backend.set_option(
                     "firewall", "vpn_turris_forward_wan_out", "enabled",
                     store_bool(True if route_all else False)
