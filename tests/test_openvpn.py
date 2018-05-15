@@ -901,7 +901,10 @@ def test_get_client_config_openwrt(
     if hostname:
         assert hostname in res["data"]["config"]
     assert "dev tun_turris" in res["data"]["config"]
-    assert "proto %s" % proto in res["data"]["config"]
+    if proto in ["tcp-server", "tcp4-server", "tcp6-server"]:
+        assert "proto %s" % proto.replace("server", "client") in res["data"]["config"]
+    else:
+        assert "proto %s" % proto in res["data"]["config"]
     assert "<ca>" in res["data"]["config"]
     assert "</ca>" in res["data"]["config"]
     assert "<cert>" in res["data"]["config"]

@@ -469,7 +469,7 @@ verb 3
 
         return self.CONFIG_TEMPLATE % dict(
             dev=dev,
-            proto=proto,
+            proto=proto.replace("server", "client"),
             port=port,
             hostname=hostname,
             ca=ca,
