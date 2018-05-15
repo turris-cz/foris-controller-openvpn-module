@@ -529,7 +529,7 @@ def test_get_settings(uci_configs_init, infrastructure, ubusd_test):
     })
     assert set(res["data"].keys()) == {
         u"enabled", u"network", u"network_netmask", u"device", u"protocol", u"port", u"routes",
-        u"route_all", u"use_dns", u"server_hostname"
+        u"route_all", u"use_dns", u"server_hostname", "ipv6",
     }
 
 
@@ -560,6 +560,8 @@ def test_update_settings(uci_configs_init, init_script_result, infrastructure, u
     update({u"enabled": False})
     update({
         "enabled": True,
+        "ipv6": True,
+        "protocol": "udp",
         "network": "10.111.222.0",
         "network_netmask": "255.255.254.0",
         "route_all": False,
@@ -567,6 +569,8 @@ def test_update_settings(uci_configs_init, init_script_result, infrastructure, u
     })
     update({
         "enabled": True,
+        "ipv6": False,
+        "protocol": "tcp",
         "network": "10.222.222.0",
         "network_netmask": "255.255.252.0",
         "route_all": True,
@@ -615,6 +619,8 @@ def test_update_settings_openwrt(
         "network_netmask": "255.255.254.0",
         "route_all": False,
         "use_dns": False,
+        "ipv6": False,
+        "protocol": "udp",
     })
 
     with uci.UciBackend() as backend:
@@ -682,6 +688,8 @@ def test_update_settings_openwrt(
         "network_netmask": "255.255.252.0",
         "route_all": True,
         "use_dns": True,
+        "ipv6": True,
+        "protocol": "tcp",
     })
 
     with uci.UciBackend() as backend:
@@ -695,7 +703,7 @@ def test_update_settings_openwrt(
     assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_rule", "enabled")) is True
     assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "name") == "vpn_turris_rule"
     assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "target") == "ACCEPT"
-    assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "proto") == "udp"
+    assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "proto") == "tcp"
     assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "src") == "wan"
     assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "dest_port") == "1194"
 
@@ -723,7 +731,7 @@ def test_update_settings_openwrt(
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "enabled")) is True
     assert uci.get_option_named(data, "openvpn", "server_turris", "server") == "10.222.222.0 255.255.252.0"
     assert uci.get_option_named(data, "openvpn", "server_turris", "port") == "1194"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "proto") == "udp"
+    assert uci.get_option_named(data, "openvpn", "server_turris", "proto") == "tcp6-server"
     assert uci.get_option_named(data, "openvpn", "server_turris", "dev") == "tun_turris"
     assert uci.get_option_named(data, "openvpn", "server_turris", "ca") == "/etc/ssl/ca/openvpn/ca.crt"
     assert uci.get_option_named(data, "openvpn", "server_turris", "crl_verify") == "/etc/ssl/ca/openvpn/ca.crl"
@@ -838,9 +846,11 @@ def test_get_client_config_mock(infrastructure, hostname, ubusd_test):
     assert res["data"]["status"] == "revoked"
     check_hostname(hostname)
 
+
 AVAILABLE_PROTOCOLS = [
     "tcp", "udp", "tcp-server", "tcp4", "udp4", "tcp4-server", "tcp6", "udp6", "tcp6-server"
 ]
+
 
 @pytest.mark.only_backends(['openwrt'])
 @pytest.mark.parametrize("hostname", ["", "10.30.50.70"])
@@ -939,4 +949,5 @@ def test_available_protocols(
         "action": "get_settings",
         "kind": "request",
     })
-    assert res["data"]["protocol"] == proto
+    assert res["data"]["protocol"] == proto[:3]
+    assert res["data"]["ipv6"] == ("6" in proto)

@@ -258,6 +258,8 @@
                         "enabled": {"type": "boolean"},
                         "network": {"format": "ipv4", "type": "string"},
                         "network_netmask": { "format": "ipv4", "type": "string"},
+                        "ipv6": {"type": "boolean"},
+                        "protocol": {"enum": ["udp", "tcp"]},
                         "routes": {
                             "type": "array",
                             "items": {
@@ -271,10 +273,6 @@
                             }
                         },
                         "device": {"type": "string"},
-                        "protocol": {"enum": [
-                            "", "udp", "tcp", "tcp-server", "udp4", "tcp4", "tcp4-server",
-                            "udp6", "tcp6", "tcp6-server"
-                        ]},
                         "port": {"type": "integer", "minimum": 0, "maximum": 65535},
                         "server_hostname": {"type": "string"},
                         "route_all": {"type": "boolean"},
@@ -283,7 +281,7 @@
                     "additionalProperties": false,
                     "required": [
                         "enabled", "network", "network_netmask", "routes", "device", "port", "protocol",
-                        "route_all", "use_dns", "server_hostname"
+                        "route_all", "use_dns", "server_hostname", "ipv6"
                     ]
                 }
             },
@@ -302,13 +300,18 @@
                             "type": "object",
                             "properties": {
                                 "enabled": {"enum": [true]},
+                                "ipv6": {"type": "boolean"},
+                                "protocol": {"enum": ["udp", "tcp"]},
                                 "network": {"format": "ipv4", "type": "string"},
                                 "network_netmask": { "format": "ipv4", "type": "string"},
                                 "route_all": {"type": "boolean"},
                                 "use_dns": {"type": "boolean"}
                             },
                             "additionalProperties": false,
-                            "required": ["enabled", "network", "network_netmask", "route_all", "use_dns"]
+                            "required": [
+                                "enabled", "network", "network_netmask", "route_all", "use_dns",
+                                "protocol", "ipv6"
+                            ]
                         },
                         {
                             "type": "object",
@@ -354,13 +357,18 @@
                             "type": "object",
                             "properties": {
                                 "enabled": {"enum": [true]},
+                                "ipv6": {"type": "boolean"},
+                                "protocol": {"enum": ["udp", "tcp"]},
                                 "network": {"format": "ipv4", "type": "string"},
                                 "network_netmask": { "format": "ipv4", "type": "string"},
                                 "route_all": {"type": "boolean"},
                                 "use_dns": {"type": "boolean"}
                             },
                             "additionalProperties": false,
-                            "required": ["enabled", "network", "network_netmask", "route_all", "use_dns"]
+                            "required": [
+                                "enabled", "network", "network_netmask", "route_all", "use_dns",
+                                "protocol", "ipv6"
+                            ]
                         },
                         {
                             "type": "object",

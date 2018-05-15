@@ -163,7 +163,9 @@ class OpenvpnUci(object):
                 for e in push_options if e.startswith("route ")
             ]
             device = get_option_named(data, "openvpn", "server_turris", "dev", "")
-            protocol = get_option_named(data, "openvpn", "server_turris", "proto", "")
+            protocol = get_option_named(data, "openvpn", "server_turris", "proto", "udp")
+            ipv6 = "6" in protocol  # tcp6, tcp6-server, udp6
+            protocol = "tcp" if protocol.startswith("tcp") else "udp"
             port = int(get_option_named(data, "openvpn", "server_turris", "port", "0"))
             use_dns = True if [e for e in push_options if e.startswith("dhcp-option DNS")] \
                 else False
@@ -186,10 +188,12 @@ class OpenvpnUci(object):
             "route_all": route_all,
             "use_dns": use_dns,
             "server_hostname": server_hostname,
+            "ipv6": ipv6,
         }
 
     def update_settings(
-        self, enabled, network=None, network_netmask=None, route_all=None, use_dns=None
+        self, enabled, network=None, network_netmask=None, route_all=None, use_dns=None,
+        protocol=None, ipv6=None
     ):
         with UciBackend() as backend:
             if enabled:
@@ -215,7 +219,7 @@ class OpenvpnUci(object):
                 backend.set_option("firewall", "vpn_turris_rule", "enabled", store_bool(True))
                 backend.set_option("firewall", "vpn_turris_rule", "name", "vpn_turris_rule")
                 backend.set_option("firewall", "vpn_turris_rule", "target", "ACCEPT")
-                backend.set_option("firewall", "vpn_turris_rule", "proto", "udp")
+                backend.set_option("firewall", "vpn_turris_rule", "proto", protocol)
                 backend.set_option("firewall", "vpn_turris_rule", "src", "wan")
                 backend.set_option("firewall", "vpn_turris_rule", "dest_port", "1194")
                 backend.add_section("firewall", "forwarding", "vpn_turris_forward_lan_in")
@@ -239,7 +243,11 @@ class OpenvpnUci(object):
                 backend.add_section("openvpn", "openvpn", "server_turris")
                 backend.set_option("openvpn", "server_turris", "enabled", store_bool(True))
                 backend.set_option("openvpn", "server_turris", "port", "1194")
-                backend.set_option("openvpn", "server_turris", "proto", "udp")
+                if ipv6:
+                    proto = "tcp6-server" if protocol == "tcp" else "udp6"
+                else:
+                    proto = "tcp-server" if protocol == "tcp" else "udp"
+                backend.set_option("openvpn", "server_turris", "proto", proto)
                 backend.set_option("openvpn", "server_turris", "dev", "tun_turris")
                 backend.set_option("openvpn", "server_turris", "ca", "/etc/ssl/ca/openvpn/ca.crt")
                 backend.set_option(
