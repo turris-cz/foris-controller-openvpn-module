@@ -271,7 +271,10 @@
                             }
                         },
                         "device": {"type": "string"},
-                        "protocol": {"enum": ["", "udp", "tcp-client", "tcp-server"]},
+                        "protocol": {"enum": [
+                            "", "udp", "tcp", "tcp-server", "udp4", "tcp4", "tcp4-server",
+                            "udp6", "tcp6", "tcp6-server"
+                        ]},
                         "port": {"type": "integer", "minimum": 0, "maximum": 65535},
                         "server_hostname": {"type": "string"},
                         "route_all": {"type": "boolean"},

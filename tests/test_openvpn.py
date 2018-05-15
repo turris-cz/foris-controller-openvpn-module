@@ -838,13 +838,23 @@ def test_get_client_config_mock(infrastructure, hostname, ubusd_test):
     assert res["data"]["status"] == "revoked"
     check_hostname(hostname)
 
+AVAILABLE_PROTOCOLS = [
+    "tcp", "udp", "tcp-server", "tcp4", "udp4", "tcp4-server", "tcp6", "udp6", "tcp6-server"
+]
 
 @pytest.mark.only_backends(['openwrt'])
 @pytest.mark.parametrize("hostname", ["", "10.30.50.70"])
+@pytest.mark.parametrize("proto", AVAILABLE_PROTOCOLS)
 def test_get_client_config_openwrt(
     ready_certs, uci_configs_init, init_script_result, lock_backend, infrastructure, ubusd_test,
-    hostname, file_root_init
+    hostname, file_root_init, proto
 ):
+
+    uci = get_uci_module(lock_backend)
+    with uci.UciBackend() as backend:
+        backend.add_section("openvpn", "openvpn", "server_turris")
+        backend.set_option("openvpn", "server_turris", "proto", proto)
+
     def check_hostname(server_hostname):
         if server_hostname:
             res = infrastructure.process_message({
@@ -891,7 +901,7 @@ def test_get_client_config_openwrt(
     if hostname:
         assert hostname in res["data"]["config"]
     assert "dev tun_turris" in res["data"]["config"]
-    assert "proto udp" in res["data"]["config"]
+    assert "proto %s" % proto in res["data"]["config"]
     assert "<ca>" in res["data"]["config"]
     assert "</ca>" in res["data"]["config"]
     assert "<cert>" in res["data"]["config"]
@@ -909,3 +919,21 @@ def test_get_client_config_openwrt(
     #    assert "cipher %s" % custom_cipher in res["data"]["config"]
     # if comp_lzo_used:
     #    assert "comp-lzo" in res["data"]["config"]
+
+
+@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.parametrize("proto", AVAILABLE_PROTOCOLS)
+def test_available_protocols(
+    uci_configs_init, init_script_result, lock_backend, infrastructure, ubusd_test, proto
+):
+    uci = get_uci_module(lock_backend)
+    with uci.UciBackend() as backend:
+        backend.add_section("openvpn", "openvpn", "server_turris")
+        backend.set_option("openvpn", "server_turris", "proto", proto)
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_settings",
+        "kind": "request",
+    })
+    assert res["data"]["protocol"] == proto
