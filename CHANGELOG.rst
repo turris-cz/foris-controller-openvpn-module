@@ -1,3 +1,9 @@
+0.3 (2018-05-24)
+----------------
+
+* listening on IPv6 address
+* protocol support extended
+
 0.2 (2018-04-26)
 ----------------
 
