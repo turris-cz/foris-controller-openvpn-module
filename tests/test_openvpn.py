@@ -25,7 +25,7 @@ from foris_controller_testtools.fixtures import (
     backend, infrastructure, ubusd_test, only_backends, uci_configs_init,
     init_script_result, lock_backend, file_root_init
 )
-from foris_controller_testtools.utils import match_subdict, check_service_result, get_uci_module
+from foris_controller_testtools.utils import match_subdict, get_uci_module, sh_was_called
 
 CERT_PATH = "/tmp/test-cagen/"
 
@@ -598,7 +598,8 @@ def test_update_settings_openwrt(
             u'kind': u'reply',
             u'module': u'openvpn'
         }
-        check_service_result("openvpn", True, "restart")
+        assert sh_was_called("/etc/init.d/network", ["restart"], cleanup=False)
+        assert sh_was_called("/etc/init.d/openvpn", ["restart"])
 
     update({
         "enabled": False,
