@@ -298,7 +298,8 @@ class OpenvpnUci(object):
                 backend.set_option("openvpn", "server_turris", "enabled", store_bool(False))
 
         with OpenwrtServices() as services:
-            services.restart("openvpn")
+            services.restart("network", delay=2)
+            services.restart("openvpn", delay=3)
 
         return True
 
