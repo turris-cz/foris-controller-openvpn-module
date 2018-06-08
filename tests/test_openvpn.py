@@ -672,7 +672,7 @@ def test_update_settings_openwrt(
     assert uci.get_option_named(data, "openvpn", "server_turris", "ifconfig_pool_persist") == "/tmp/ipp.txt"
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "duplicate_cn")) is False
     assert uci.get_option_named(data, "openvpn", "server_turris", "keepalive") == "10 120"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "comp_lzo") == "yes"
+    assert uci.get_option_named(data, "openvpn", "server_turris", "compress") == "lzo"
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_key")) is True
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_tun")) is True
     assert uci.get_option_named(data, "openvpn", "server_turris", "status") == "/tmp/openvpn-status.log"
@@ -741,7 +741,7 @@ def test_update_settings_openwrt(
     assert uci.get_option_named(data, "openvpn", "server_turris", "ifconfig_pool_persist") == "/tmp/ipp.txt"
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "duplicate_cn")) is False
     assert uci.get_option_named(data, "openvpn", "server_turris", "keepalive") == "10 120"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "comp_lzo") == "yes"
+    assert uci.get_option_named(data, "openvpn", "server_turris", "compress") == "lzo"
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_key")) is True
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_tun")) is True
     assert uci.get_option_named(data, "openvpn", "server_turris", "status") == "/tmp/openvpn-status.log"
@@ -930,8 +930,8 @@ def test_get_client_config_openwrt(
     #    assert "</tls-auth>" in res["data"]["config"]
     # if custom_cipher:
     #    assert "cipher %s" % custom_cipher in res["data"]["config"]
-    # if comp_lzo_used:
-    #    assert "comp-lzo" in res["data"]["config"]
+    # if compress_used:
+    #    assert "compress" in res["data"]["config"]
 
 
 @pytest.mark.only_backends(['openwrt'])

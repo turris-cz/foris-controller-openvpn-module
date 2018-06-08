@@ -261,7 +261,7 @@ class OpenvpnUci(object):
                     "openvpn", "server_turris", "ifconfig_pool_persist", "/tmp/ipp.txt")
                 backend.set_option("openvpn", "server_turris", "duplicate_cn", store_bool(False))
                 backend.set_option("openvpn", "server_turris", "keepalive", "10 120")
-                backend.set_option("openvpn", "server_turris", "comp_lzo", "yes")
+                backend.set_option("openvpn", "server_turris", "compress", "lzo")
                 backend.set_option("openvpn", "server_turris", "persist_key", store_bool(True))
                 backend.set_option("openvpn", "server_turris", "persist_tun", store_bool(True))
                 backend.set_option("openvpn", "server_turris", "status", "/tmp/openvpn-status.log")
@@ -322,7 +322,7 @@ class OpenvpnUci(object):
         port = get_option_named(data, "openvpn", "server_turris", "port", "1194")
         ca_path = get_option_named(
             data, "openvpn", "server_turris", "ca", "/etc/ssl/ca/openvpn/ca.crt")
-        comp_lzo = get_option_named(data, "openvpn", "server_turris", "comp_lzo", "") == "yes"
+        compress = get_option_named(data, "openvpn", "server_turris", "compress", "")
         cipher = get_option_named(data, "openvpn", "server_turris", "cipher", "")
         tls_auth_path = get_option_named(data, "openvpn", "server_turris", "tls_auth", "")
         return {
@@ -330,7 +330,7 @@ class OpenvpnUci(object):
             "proto": proto,
             "port": port,
             "ca_path": ca_path,
-            "comp_lzo": comp_lzo,
+            "compress": compress,
             "cipher": cipher,
             "tls_auth_path": tls_auth_path,
         }
@@ -429,7 +429,7 @@ remote-cert-tls server
 
 %(cipher_section)s
 
-%(comp_lzo)s
+%(compress)s
 
 # Set log file verbosity.
 verb 3
@@ -454,7 +454,7 @@ verb 3
 
     BASE_CERT_PATH = "/etc/ssl/ca/openvpn"
 
-    def get_config(self, id, hostname, dev, proto, port, comp_lzo, cipher, tls_auth_path, ca_path):
+    def get_config(self, id, hostname, dev, proto, port, compress, cipher, tls_auth_path, ca_path):
         ca = self._file_content(ca_path)
         cert = self._file_content(os.path.join(self.BASE_CERT_PATH, "%s.crt" % id))
         key = self._file_content(os.path.join(self.BASE_CERT_PATH, "%s.key" % id))
@@ -473,7 +473,7 @@ verb 3
             tls_auth_section = "key-direction 1\n<tls-auth>\n%s\n</tls-auth>" % tls_auth
         else:
             tls_auth_section = ""
-        comp_lzo = "comp-lzo" if comp_lzo else ""
+        compress = "compress %s" % compress if compress else ""
 
         return self.CONFIG_TEMPLATE % dict(
             dev=dev,
@@ -485,5 +485,5 @@ verb 3
             key=key,
             tls_auth_section=tls_auth_section,
             cipher_section=cipher_section,
-            comp_lzo=comp_lzo,
+            compress=compress,
         )
