@@ -372,7 +372,7 @@ def test_generate_client_name_failed(empty_certs, infrastructure, ubusd_test):
             "kind": "request",
             "data": {"name": name},
         })
-        assert "errors" in res["data"]
+        assert "errors" in res
 
     wrong_name("aaa%")
     wrong_name("bbb$")
@@ -786,7 +786,7 @@ def test_get_client_config_mock(infrastructure, hostname, ubusd_test):
         "action": "generate_ca",
         "kind": "request",
     })
-    assert "errors" not in res["data"]
+    assert "errors" not in res
 
     query_data["id"] = "FF"
     res = infrastructure.process_message({
@@ -805,13 +805,13 @@ def test_get_client_config_mock(infrastructure, hostname, ubusd_test):
         "kind": "request",
         "data": {"name": "get_client_config"},
     })
-    assert "errors" not in res["data"]
+    assert "errors" not in res
     res = infrastructure.process_message({
         "module": "openvpn",
         "action": "get_status",
         "kind": "request",
     })
-    assert "errors" not in res["data"]
+    assert "errors" not in res
     assert res["data"]["clients"][-1]["name"] == "get_client_config"
     client = res["data"]["clients"][-1]
 
