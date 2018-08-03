@@ -94,6 +94,7 @@ class CaGenCmds(BaseCmdLine):
     def get_status(self):
         output, _ = self._run_command_and_check_retval(
             ["/usr/bin/turris-cagen-status", "openvpn"], 0)
+        output = output.decode("utf-8")
         ca_status = re.search(r"^status: (\w+)$", output, re.MULTILINE).group(1)
         clients = []
         in_cert_section = False
