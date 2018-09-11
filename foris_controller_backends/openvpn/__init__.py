@@ -27,6 +27,7 @@ from foris_controller_backends.uci import (
     UciBackend, get_option_named, parse_bool, UciException, store_bool
 )
 from foris_controller_backends.wan import WanStatusCommands
+from foris_controller_backends.maintain import MaintainCommands
 from foris_controller_backends.services import OpenwrtServices
 from foris_controller.utils import IPv4
 
@@ -299,7 +300,7 @@ class OpenvpnUci(object):
                 backend.set_option("openvpn", "server_turris", "enabled", store_bool(False))
 
         with OpenwrtServices() as services:
-            services.restart("network", delay=2)
+            MaintainCommands().restart_network()
             services.restart("openvpn", delay=3)
 
         return True

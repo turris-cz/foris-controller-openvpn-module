@@ -23,9 +23,11 @@ import shutil
 
 from foris_controller_testtools.fixtures import (
     backend, infrastructure, ubusd_test, only_backends, uci_configs_init,
-    init_script_result, lock_backend, file_root_init
+    init_script_result, lock_backend, file_root_init, network_restart_command
 )
-from foris_controller_testtools.utils import match_subdict, get_uci_module, sh_was_called
+from foris_controller_testtools.utils import (
+    match_subdict, get_uci_module, sh_was_called, network_restart_was_called
+)
 
 CERT_PATH = "/tmp/test-cagen/"
 
@@ -533,7 +535,9 @@ def test_get_settings(uci_configs_init, infrastructure, ubusd_test):
     }
 
 
-def test_update_settings(uci_configs_init, init_script_result, infrastructure, ubusd_test):
+def test_update_settings(
+    uci_configs_init, init_script_result, infrastructure, ubusd_test, network_restart_command
+):
     filters = [("openvpn", "update_settings")]
 
     def update(new_settings):
@@ -580,7 +584,8 @@ def test_update_settings(uci_configs_init, init_script_result, infrastructure, u
 
 @pytest.mark.only_backends(['openwrt'])
 def test_update_settings_openwrt(
-    uci_configs_init, init_script_result, lock_backend, infrastructure, ubusd_test
+    uci_configs_init, init_script_result, lock_backend, infrastructure, ubusd_test,
+    network_restart_command
 ):
 
     uci = get_uci_module(lock_backend)
@@ -598,8 +603,8 @@ def test_update_settings_openwrt(
             u'kind': u'reply',
             u'module': u'openvpn'
         }
-        assert sh_was_called("/etc/init.d/network", ["restart"], cleanup=False)
-        assert sh_was_called("/etc/init.d/openvpn", ["restart"])
+        assert network_restart_was_called([])
+        assert sh_was_called(["/etc/init.d/openvpn", "restart"])
 
     update({
         "enabled": False,
