@@ -41,7 +41,10 @@ setup(
     package_data={
         'foris_controller_modules.openvpn': ['schema', 'schema/*.json'],
     },
-    scripts=[],
+    namespace_packages=[
+        'foris_controller_modules',
+        'foris_controller_backends',
+    ],
     description=DESCRIPTION,
     long_description=open('README.rst').read(),
     install_requires=[
