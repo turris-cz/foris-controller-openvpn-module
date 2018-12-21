@@ -22,14 +22,10 @@ import os
 
 # load common fixtures
 from foris_controller_testtools.fixtures import (
-    ubusd_acl_path, uci_config_default_path, cmdline_script_root,
-    controller_modules, extra_module_paths, message_bus, backend, file_root
+    uci_config_default_path, cmdline_script_root,
+    controller_modules, extra_module_paths, message_bus, backend
 )
 
-
-@pytest.fixture(scope="session")
-def ubusd_acl_path():
-    return os.path.join(os.path.dirname(os.path.realpath(__file__)), "ubus-acl")
 
 
 @pytest.fixture(scope="session")
@@ -50,6 +46,7 @@ def cmdline_script_root():
 def controller_modules():
     return ["openvpn"]
 
+
 @pytest.fixture(scope="session")
 def file_root():
     # default src dirctory will be the same as for the scripts  (could be override later)
@@ -57,11 +54,17 @@ def file_root():
         os.path.dirname(os.path.realpath(__file__)), "test_files"
     )
 
+
 def pytest_addoption(parser):
     parser.addoption(
         "--backend", action="append",
         default=[],
         help=("Set test backend here. available values = (mock, openwrt)")
+    )
+    parser.addoption(
+        "--message-bus", action="append",
+        default=[],
+        help=("Set test bus here. available values = (unix-socket, ubus, mqtt)")
     )
     parser.addoption(
         "--debug-output", action="store_true",
@@ -72,7 +75,13 @@ def pytest_addoption(parser):
 
 def pytest_generate_tests(metafunc):
     if 'backend' in metafunc.fixturenames:
-        backend = set(metafunc.config.option.backend)
+        backend = metafunc.config.option.backend
         if not backend:
-            backend = ['mock']
+            backend = ['openwrt']
         metafunc.parametrize("backend_param", backend, scope='module')
+
+    if 'message_bus' in metafunc.fixturenames:
+        message_bus = metafunc.config.option.message_bus
+        if not message_bus:
+            message_bus = ['ubus']
+        metafunc.parametrize("message_bus_param", message_bus, scope='module')
