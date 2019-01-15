@@ -110,7 +110,7 @@ class CaGenCmds(BaseCmdLine):
                             "name": name,
                             "status": status,
                         })
-                    elif cert_type == "server":
+                    elif cert_type == "server" and status == "valid":
                         server_cert_found = True
                 except ValueError:
                     continue
