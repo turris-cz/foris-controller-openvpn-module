@@ -1,3 +1,11 @@
+0.6 (2018-02-11)
+----------------
+
+* compress logic update
+* setup.py: making dependencies paho-mqtt and ubus optional
+* python2 deprecation
+* ca ready fix
+
 0.5.1 (2018-11-30)
 ------------------
 
