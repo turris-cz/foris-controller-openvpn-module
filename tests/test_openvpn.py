@@ -679,7 +679,8 @@ def test_update_settings_openwrt(
     assert uci.get_option_named(data, "openvpn", "server_turris", "ifconfig_pool_persist") == "/tmp/ipp.txt"
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "duplicate_cn")) is False
     assert uci.get_option_named(data, "openvpn", "server_turris", "keepalive") == "10 120"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "compress") == "lzo"
+    assert not uci.get_option_named(data, "openvpn", "server_turris", "compress", False)
+    assert not uci.get_option_named(data, "openvpn", "server_turris", "comp_lzo", False)
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_key")) is True
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_tun")) is True
     assert uci.get_option_named(data, "openvpn", "server_turris", "status") == "/tmp/openvpn-status.log"
@@ -748,7 +749,8 @@ def test_update_settings_openwrt(
     assert uci.get_option_named(data, "openvpn", "server_turris", "ifconfig_pool_persist") == "/tmp/ipp.txt"
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "duplicate_cn")) is False
     assert uci.get_option_named(data, "openvpn", "server_turris", "keepalive") == "10 120"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "compress") == "lzo"
+    assert not uci.get_option_named(data, "openvpn", "server_turris", "compress", False)
+    assert not uci.get_option_named(data, "openvpn", "server_turris", "comp_lzo", False)
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_key")) is True
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_tun")) is True
     assert uci.get_option_named(data, "openvpn", "server_turris", "status") == "/tmp/openvpn-status.log"
@@ -958,3 +960,103 @@ def test_available_protocols(
     })
     assert res["data"]["protocol"] == proto[:3]
     assert res["data"]["ipv6"] == ("6" in proto)
+
+
+@pytest.mark.only_backends(['openwrt'])
+def test_get_client_config_compress_openwrt(
+    ready_certs, uci_configs_init, init_script_result, lock_backend, infrastructure, start_buses,
+    file_root_init, network_restart_command,
+):
+    def update():
+        res = infrastructure.process_message({
+            "module": "openvpn",
+            "action": "update_settings",
+            "kind": "request",
+            "data": {
+                "enabled": True,
+                "ipv6": False,
+                "protocol": "tcp",
+                "network": "10.222.222.0",
+                "network_netmask": "255.255.252.0",
+                "route_all": False,
+                "use_dns": False,
+            },
+        })
+        assert "result" in res["data"]
+        assert res["data"]["result"] is True
+
+    # initial settings (generates server_turris section)
+    update()
+
+    # default no compress
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": {"id": "03", "hostname": "172.20.20.20"},
+    })
+    assert "compress " not in res["data"]["config"]
+    assert "comp-lzo" not in res["data"]["config"]
+
+    # compress present
+    uci = get_uci_module(lock_backend)
+    with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
+        backend.add_section("openvpn", "openvpn", "server_turris")
+        backend.set_option("openvpn", "server_turris", "compress", "lz4")
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": {"id": "03", "hostname": "172.20.20.20"},
+    })
+    assert "compress lz4" in res["data"]["config"]
+    assert "comp-lzo" not in res["data"]["config"]
+
+    # survive update
+    update()
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": {"id": "03", "hostname": "172.20.20.20"},
+    })
+    assert "compress lz4" in res["data"]["config"]
+    assert "comp-lzo" not in res["data"]["config"]
+
+    # compress missing
+    with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
+        backend.del_option("openvpn", "server_turris", "compress")
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": {"id": "03", "hostname": "172.20.20.20"},
+    })
+    assert "compress " not in res["data"]["config"]
+    assert "comp-lzo" not in res["data"]["config"]
+
+    # compress old
+    with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
+        backend.set_option("openvpn", "server_turris", "comp_lzo", "yes")
+
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": {"id": "03", "hostname": "172.20.20.20"},
+    })
+    assert "compress lzo" in res["data"]["config"]
+    assert "comp-lzo" not in res["data"]["config"]
+
+    # survive update
+    update()
+    res = infrastructure.process_message({
+        "module": "openvpn",
+        "action": "get_client_config",
+        "kind": "request",
+        "data": {"id": "03", "hostname": "172.20.20.20"},
+    })
+    assert "compress lzo" in res["data"]["config"]
+    assert "comp-lzo" not in res["data"]["config"]

@@ -263,7 +263,6 @@ class OpenvpnUci(object):
                     "openvpn", "server_turris", "ifconfig_pool_persist", "/tmp/ipp.txt")
                 backend.set_option("openvpn", "server_turris", "duplicate_cn", store_bool(False))
                 backend.set_option("openvpn", "server_turris", "keepalive", "10 120")
-                backend.set_option("openvpn", "server_turris", "compress", "lzo")
                 backend.set_option("openvpn", "server_turris", "persist_key", store_bool(True))
                 backend.set_option("openvpn", "server_turris", "persist_tun", store_bool(True))
                 backend.set_option("openvpn", "server_turris", "status", "/tmp/openvpn-status.log")
@@ -326,6 +325,14 @@ class OpenvpnUci(object):
         ca_path = get_option_named(
             data, "openvpn", "server_turris", "ca", "/etc/ssl/ca/openvpn/ca.crt")
         compress = get_option_named(data, "openvpn", "server_turris", "compress", "")
+
+        # handle server in old configuration (can be removed once we migrate to openvpn 2.5)
+        if not compress:
+            old_lzo_present = parse_bool(
+                get_option_named(data, "openvpn", "server_turris", "comp_lzo", "0")
+            )
+            compress = "lzo" if old_lzo_present else ""
+
         cipher = get_option_named(data, "openvpn", "server_turris", "cipher", "")
         tls_auth_path = get_option_named(data, "openvpn", "server_turris", "tls_auth", "")
         return {
