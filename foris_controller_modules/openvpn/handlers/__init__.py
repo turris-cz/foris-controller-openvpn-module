@@ -20,7 +20,4 @@
 from .mock import MockOpenvpnHandler
 from .openwrt import OpenwrtOpenvpnHandler
 
-__all__ = [
-    'MockOpenvpnHandler',
-    'OpenwrtOpenvpnHandler',
-]
+__all__ = ["MockOpenvpnHandler", "OpenwrtOpenvpnHandler"]

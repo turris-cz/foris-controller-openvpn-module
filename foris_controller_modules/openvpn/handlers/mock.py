@@ -38,9 +38,7 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
         "protocol": "udp",
         "network": "10.111.111.0",
         "network_netmask": "255.255.255.0",
-        "routes": [
-            {"network": "192.168.1.0", "netmask": "255.255.255.0"}
-        ],
+        "routes": [{"network": "192.168.1.0", "netmask": "255.255.255.0"}],
         "device": "tun_turris",
         "server_hostname": "",
         "port": 1194,
@@ -51,7 +49,7 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
     @logger_wrapper(logger)
     def generate_ca(self, notify, exit_notify, reset_notify):
         MockOpenvpnHandler.ca_generated = True
-        return "%08X" % random.randrange(2**32)
+        return "%08X" % random.randrange(2 ** 32)
 
     @logger_wrapper(logger)
     def get_status(self):
@@ -62,14 +60,12 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
 
     @logger_wrapper(logger)
     def generate_client(self, name, notify, exit_notify, reset_notify):
-        MockOpenvpnHandler.clients.append({
-            "id": "%02X" % MockOpenvpnHandler.current_id,
-            "name": name,
-            "status": "valid",
-        })
+        MockOpenvpnHandler.clients.append(
+            {"id": "%02X" % MockOpenvpnHandler.current_id, "name": name, "status": "valid"}
+        )
         MockOpenvpnHandler.current_id += 1
 
-        return "%08X" % random.randrange(2**32)
+        return "%08X" % random.randrange(2 ** 32)
 
     @logger_wrapper(logger)
     def revoke(self, cert_id):
@@ -92,8 +88,14 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
 
     @logger_wrapper(logger)
     def update_settings(
-        self, enabled, network=None, network_netmask=None, route_all=None, use_dns=None,
-        ipv6=None, protocol=None
+        self,
+        enabled,
+        network=None,
+        network_netmask=None,
+        route_all=None,
+        use_dns=None,
+        ipv6=None,
+        protocol=None,
     ):
         MockOpenvpnHandler.settings["enabled"] = enabled
         if enabled:

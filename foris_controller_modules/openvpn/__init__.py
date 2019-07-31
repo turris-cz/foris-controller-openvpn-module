@@ -27,7 +27,6 @@ class OpenvpnModule(BaseModule):
     logger = logging.getLogger(__name__)
 
     def action_generate_ca(self, data):
-
         def notify(msg):
             self.notify("generate_ca", msg)
 
@@ -40,7 +39,6 @@ class OpenvpnModule(BaseModule):
         return self.handler.get_status()
 
     def action_generate_client(self, data):
-
         def notify(msg):
             self.notify("generate_client", msg)
 
@@ -78,15 +76,17 @@ class OpenvpnModule(BaseModule):
         return self.handler.get_client_config(**data)
 
 
-@wrap_required_functions([
-    'generate_ca',
-    'get_status',
-    'generate_client',
-    'revoke',
-    'delete_ca',
-    'get_settings',
-    'update_settings',
-    'get_client_config',
-])
+@wrap_required_functions(
+    [
+        "generate_ca",
+        "get_status",
+        "generate_client",
+        "revoke",
+        "delete_ca",
+        "get_settings",
+        "update_settings",
+        "get_client_config",
+    ]
+)
 class Handler(object):
     pass

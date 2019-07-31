@@ -62,11 +62,18 @@ class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
 
     @logger_wrapper(logger)
     def update_settings(
-        self, enabled, network=None, network_netmask=None, route_all=None, use_dns=None,
-        ipv6=None, protocol=None
+        self,
+        enabled,
+        network=None,
+        network_netmask=None,
+        route_all=None,
+        use_dns=None,
+        ipv6=None,
+        protocol=None,
     ):
         return self.uci.update_settings(
-            enabled, network, network_netmask, route_all, use_dns, protocol, ipv6)
+            enabled, network, network_netmask, route_all, use_dns, protocol, ipv6
+        )
 
     @logger_wrapper(logger)
     def get_client_config(self, id, hostname=None):
@@ -80,5 +87,5 @@ class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
         options = self.uci.get_options_for_client()
         return {
             "status": "valid",
-            "config": self.files.get_config(id=id, hostname=hostname, **options)
+            "config": self.files.get_config(id=id, hostname=hostname, **options),
         }

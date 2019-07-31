@@ -24,7 +24,11 @@ import logging
 from foris_controller_backends.cmdline import AsyncCommand, BaseCmdLine
 from foris_controller_backends.files import BaseFile
 from foris_controller_backends.uci import (
-    UciBackend, get_option_named, parse_bool, UciException, store_bool
+    UciBackend,
+    get_option_named,
+    parse_bool,
+    UciException,
+    store_bool,
 )
 from foris_controller_backends.wan import WanStatusCommands
 from foris_controller_backends.maintain import MaintainCommands
@@ -35,18 +39,19 @@ logger = logging.getLogger(__name__)
 
 
 class CaGenAsync(AsyncCommand):
-
     def generate_ca(self, notify_function, exit_notify_function, reset_notify_function):
-
         def handler_exit(process_data):
-            exit_notify_function({
-                "task_id": process_data.id,
-                "status": "succeeded" if process_data.get_retval() == 0 else "failed"
-            })
+            exit_notify_function(
+                {
+                    "task_id": process_data.id,
+                    "status": "succeeded" if process_data.get_retval() == 0 else "failed",
+                }
+            )
 
         def gen_handler(status):
             def handler(matched, process_data):
                 notify_function({"task_id": process_data.id, "status": status})
+
             return handler
 
         task_id = self.start_process(
@@ -64,17 +69,19 @@ class CaGenAsync(AsyncCommand):
         return task_id
 
     def generate_client(self, name, notify_function, exit_notify_function, reset_notify_function):
-
         def handler_exit(process_data):
-            exit_notify_function({
-                "task_id": process_data.id,
-                "name": name,
-                "status": "succeeded" if process_data.get_retval() == 0 else "failed"
-            })
+            exit_notify_function(
+                {
+                    "task_id": process_data.id,
+                    "name": name,
+                    "status": "succeeded" if process_data.get_retval() == 0 else "failed",
+                }
+            )
 
         def gen_handler(status):
             def handler(matched, process_data):
                 notify_function({"task_id": process_data.id, "status": status, "name": name})
+
             return handler
 
         task_id = self.start_process(
@@ -91,10 +98,10 @@ class CaGenAsync(AsyncCommand):
 
 
 class CaGenCmds(BaseCmdLine):
-
     def get_status(self):
         output, _ = self._run_command_and_check_retval(
-            ["/usr/bin/turris-cagen-status", "openvpn"], 0)
+            ["/usr/bin/turris-cagen-status", "openvpn"], 0
+        )
         output = output.decode("utf-8")
         ca_status = re.search(r"^status: (\w+)$", output, re.MULTILINE).group(1)
         clients = []
@@ -105,11 +112,7 @@ class CaGenCmds(BaseCmdLine):
                 try:
                     cert_id, cert_type, name, status = line.split(" ")
                     if cert_type == "client":
-                        clients.append({
-                            "id": cert_id,
-                            "name": name,
-                            "status": status,
-                        })
+                        clients.append({"id": cert_id, "name": name, "status": status})
                     elif cert_type == "server" and status == "valid":
                         server_cert_found = True
                 except ValueError:
@@ -120,10 +123,7 @@ class CaGenCmds(BaseCmdLine):
         # if server cert is missing this means that openvpn CA hasn't been generated yet
         ca_status = "generating" if ca_status == "ready" and not server_cert_found else ca_status
 
-        return {
-            "status": ca_status,
-            "clients": clients,
-        }
+        return {"status": ca_status, "clients": clients}
 
     def revoke(self, cert_id):
         retval, _, _ = self._run_command(
@@ -141,8 +141,7 @@ class OpenvpnUci(object):
         "enabled": False,
         "network": "10.111.111.0",
         "network_netmask": "255.255.255.0",
-        "routes": [
-        ],
+        "routes": [],
         "device": "",
         "protocol": "",
         "port": 1194,
@@ -158,23 +157,26 @@ class OpenvpnUci(object):
         try:
             enabled = parse_bool(get_option_named(data, "openvpn", "server_turris", "enabled", "0"))
             network, network_netmask = get_option_named(
-                data, "openvpn", "server_turris", "server", "10.111.111.0 255.255.255.0").split()
+                data, "openvpn", "server_turris", "server", "10.111.111.0 255.255.255.0"
+            ).split()
             push_options = get_option_named(data, "openvpn", "server_turris", "push", [])
             routes = [
                 dict(zip(("network", "netmask"), e.split()[1:]))  # `route <network> <netmask>`
-                for e in push_options if e.startswith("route ")
+                for e in push_options
+                if e.startswith("route ")
             ]
             device = get_option_named(data, "openvpn", "server_turris", "dev", "")
             protocol = get_option_named(data, "openvpn", "server_turris", "proto", "udp")
             ipv6 = "6" in protocol  # tcp6, tcp6-server, udp6
             protocol = "tcp" if protocol.startswith("tcp") else "udp"
             port = int(get_option_named(data, "openvpn", "server_turris", "port", "0"))
-            use_dns = True if [e for e in push_options if e.startswith("dhcp-option DNS")] \
-                else False
-            route_all = True if [e for e in push_options if e == "redirect-gateway def1"] \
-                else False
+            use_dns = (
+                True if [e for e in push_options if e.startswith("dhcp-option DNS")] else False
+            )
+            route_all = True if [e for e in push_options if e == "redirect-gateway def1"] else False
             server_hostname = get_option_named(
-                foris_data, "foris", "openvpn_plugin", "server_address", "")
+                foris_data, "foris", "openvpn_plugin", "server_address", ""
+            )
 
         except UciException:
             return OpenvpnUci.DEFAULTS
@@ -194,8 +196,14 @@ class OpenvpnUci(object):
         }
 
     def update_settings(
-        self, enabled, network=None, network_netmask=None, route_all=None, use_dns=None,
-        protocol=None, ipv6=None
+        self,
+        enabled,
+        network=None,
+        network_netmask=None,
+        route_all=None,
+        use_dns=None,
+        protocol=None,
+        ipv6=None,
     ):
         with UciBackend() as backend:
             if enabled:
@@ -226,18 +234,22 @@ class OpenvpnUci(object):
                 backend.set_option("firewall", "vpn_turris_rule", "dest_port", "1194")
                 backend.add_section("firewall", "forwarding", "vpn_turris_forward_lan_in")
                 backend.set_option(
-                    "firewall", "vpn_turris_forward_lan_in", "enabled", store_bool(True))
+                    "firewall", "vpn_turris_forward_lan_in", "enabled", store_bool(True)
+                )
                 backend.set_option("firewall", "vpn_turris_forward_lan_in", "src", "vpn_turris")
                 backend.set_option("firewall", "vpn_turris_forward_lan_in", "dest", "lan")
                 backend.add_section("firewall", "forwarding", "vpn_turris_forward_lan_out")
                 backend.set_option(
-                    "firewall", "vpn_turris_forward_lan_out", "enabled", store_bool(True))
+                    "firewall", "vpn_turris_forward_lan_out", "enabled", store_bool(True)
+                )
                 backend.set_option("firewall", "vpn_turris_forward_lan_out", "src", "lan")
                 backend.set_option("firewall", "vpn_turris_forward_lan_out", "dest", "vpn_turris")
                 backend.add_section("firewall", "forwarding", "vpn_turris_forward_wan_out")
                 backend.set_option(
-                    "firewall", "vpn_turris_forward_wan_out", "enabled",
-                    store_bool(True if route_all else False)
+                    "firewall",
+                    "vpn_turris_forward_wan_out",
+                    "enabled",
+                    store_bool(True if route_all else False),
                 )
                 backend.set_option("firewall", "vpn_turris_forward_wan_out", "src", "vpn_turris")
                 backend.set_option("firewall", "vpn_turris_forward_wan_out", "dest", "wan")
@@ -253,14 +265,17 @@ class OpenvpnUci(object):
                 backend.set_option("openvpn", "server_turris", "dev", "tun_turris")
                 backend.set_option("openvpn", "server_turris", "ca", "/etc/ssl/ca/openvpn/ca.crt")
                 backend.set_option(
-                    "openvpn", "server_turris", "crl_verify", "/etc/ssl/ca/openvpn/ca.crl")
+                    "openvpn", "server_turris", "crl_verify", "/etc/ssl/ca/openvpn/ca.crl"
+                )
                 backend.set_option("openvpn", "server_turris", "cert", "/etc/ssl/ca/openvpn/01.crt")
                 backend.set_option("openvpn", "server_turris", "key", "/etc/ssl/ca/openvpn/01.key")
                 backend.set_option("openvpn", "server_turris", "dh", "/etc/dhparam/dh-default.pem")
                 backend.set_option(
-                    "openvpn", "server_turris", "server", "%s %s" % (network, network_netmask))
+                    "openvpn", "server_turris", "server", "%s %s" % (network, network_netmask)
+                )
                 backend.set_option(
-                    "openvpn", "server_turris", "ifconfig_pool_persist", "/tmp/ipp.txt")
+                    "openvpn", "server_turris", "ifconfig_pool_persist", "/tmp/ipp.txt"
+                )
                 backend.set_option("openvpn", "server_turris", "duplicate_cn", store_bool(False))
                 backend.set_option("openvpn", "server_turris", "keepalive", "10 120")
                 backend.set_option("openvpn", "server_turris", "persist_key", store_bool(True))
@@ -268,15 +283,14 @@ class OpenvpnUci(object):
                 backend.set_option("openvpn", "server_turris", "status", "/tmp/openvpn-status.log")
                 backend.set_option("openvpn", "server_turris", "verb", "3")
                 backend.set_option("openvpn", "server_turris", "mute", "20")
-                push = [
-                    "route %s %s" % (IPv4.normalize_subnet(lan_ip, lan_netmask), lan_netmask)
-                ]
+                push = ["route %s %s" % (IPv4.normalize_subnet(lan_ip, lan_netmask), lan_netmask)]
                 if route_all:
                     push.append("redirect-gateway def1")
                 if use_dns:
                     # 10.111.111.0 -> 10.111.111.1
                     push.append(
-                        "dhcp-option DNS %s" % IPv4.num_to_str(IPv4.str_to_num(network) + 1))
+                        "dhcp-option DNS %s" % IPv4.num_to_str(IPv4.str_to_num(network) + 1)
+                    )
                 backend.replace_list("openvpn", "server_turris", "push", push)
 
             else:
@@ -288,13 +302,16 @@ class OpenvpnUci(object):
                 backend.set_option("firewall", "vpn_turris_rule", "enabled", store_bool(False))
                 backend.add_section("firewall", "forwarding", "vpn_turris_forward_lan_in")
                 backend.set_option(
-                    "firewall", "vpn_turris_forward_lan_in", "enabled", store_bool(False))
+                    "firewall", "vpn_turris_forward_lan_in", "enabled", store_bool(False)
+                )
                 backend.add_section("firewall", "forwarding", "vpn_turris_forward_lan_out")
                 backend.set_option(
-                    "firewall", "vpn_turris_forward_lan_out", "enabled", store_bool(False))
+                    "firewall", "vpn_turris_forward_lan_out", "enabled", store_bool(False)
+                )
                 backend.add_section("firewall", "forwarding", "vpn_turris_forward_wan_out")
                 backend.set_option(
-                    "firewall", "vpn_turris_forward_wan_out", "enabled", store_bool(False))
+                    "firewall", "vpn_turris_forward_wan_out", "enabled", store_bool(False)
+                )
                 backend.add_section("openvpn", "openvpn", "server_turris")
                 backend.set_option("openvpn", "server_turris", "enabled", store_bool(False))
 
@@ -323,7 +340,8 @@ class OpenvpnUci(object):
         proto = get_option_named(data, "openvpn", "server_turris", "proto", "udp")
         port = get_option_named(data, "openvpn", "server_turris", "port", "1194")
         ca_path = get_option_named(
-            data, "openvpn", "server_turris", "ca", "/etc/ssl/ca/openvpn/ca.crt")
+            data, "openvpn", "server_turris", "ca", "/etc/ssl/ca/openvpn/ca.crt"
+        )
         compress = get_option_named(data, "openvpn", "server_turris", "compress", "")
 
         # handle server in old configuration (can be removed once we migrate to openvpn 2.5)
