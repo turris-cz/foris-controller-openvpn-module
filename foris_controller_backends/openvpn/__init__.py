@@ -20,6 +20,7 @@
 import os
 import re
 import logging
+import ipaddress
 
 from foris_controller_backends.cmdline import AsyncCommand, BaseCmdLine
 from foris_controller_backends.files import BaseFile
@@ -33,7 +34,6 @@ from foris_controller_backends.uci import (
 from foris_controller_backends.wan import WanStatusCommands
 from foris_controller_backends.maintain import MaintainCommands
 from foris_controller_backends.services import OpenwrtServices
-from foris_controller.utils import IPv4
 
 logger = logging.getLogger(__name__)
 
@@ -283,13 +283,20 @@ class OpenvpnUci(object):
                 backend.set_option("openvpn", "server_turris", "status", "/tmp/openvpn-status.log")
                 backend.set_option("openvpn", "server_turris", "verb", "3")
                 backend.set_option("openvpn", "server_turris", "mute", "20")
-                push = ["route %s %s" % (IPv4.normalize_subnet(lan_ip, lan_netmask), lan_netmask)]
+                push = [
+                    "route %s %s"
+                    % (
+                        ipaddress.ip_network(f"{lan_ip}/{lan_netmask}", False).network_address,
+                        lan_netmask,
+                    )
+                ]
                 if route_all:
                     push.append("redirect-gateway def1")
                 if use_dns:
                     # 10.111.111.0 -> 10.111.111.1
+                    # TODO this won't work when router ip is set to a different address
                     push.append(
-                        "dhcp-option DNS %s" % IPv4.num_to_str(IPv4.str_to_num(network) + 1)
+                        f"dhcp-option DNS {ipaddress.ip_network(network, False).network_address + 1}"
                     )
                 backend.replace_list("openvpn", "server_turris", "push", push)
 
