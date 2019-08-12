@@ -1,3 +1,7 @@
+0.6.1 (2019-08-12)
+------------------
+* use ipaddress module instead of foris_controller_utils.IPv4 and remove IPv4
+
 0.6 (2018-02-11)
 ----------------
 
