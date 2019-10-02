@@ -22,15 +22,27 @@ import pytest
 import shutil
 
 from foris_controller_testtools.fixtures import (
-    backend, infrastructure, ubusd_test, only_backends, uci_configs_init,
-    init_script_result, lock_backend, file_root_init, network_restart_command,
-    UCI_CONFIG_DIR_PATH, mosquitto_test, start_buses,
+    backend,
+    infrastructure,
+    ubusd_test,
+    only_backends,
+    uci_configs_init,
+    init_script_result,
+    file_root_init,
+    network_restart_command,
+    UCI_CONFIG_DIR_PATH,
+    mosquitto_test,
+    start_buses,
 )
 from foris_controller_testtools.utils import (
-    match_subdict, get_uci_module, sh_was_called, network_restart_was_called
+    match_subdict,
+    get_uci_module,
+    sh_was_called,
+    network_restart_was_called,
 )
 
 CERT_PATH = "/tmp/test-cagen/"
+
 
 @pytest.fixture(scope="function")
 def empty_certs():
@@ -107,19 +119,16 @@ def ready_certs():
         pass
 
 
-
-@pytest.mark.only_backends(['mock'])
+@pytest.mark.only_backends(["mock"])
 def test_generate_ca_mock(infrastructure, start_buses):
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "generate_ca",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "generate_ca", "kind": "request"}
+    )
     assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
     assert "task_id" in res["data"]
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 def test_generate_ca_openwrt(empty_certs, infrastructure, start_buses):
 
     filters = [("openvpn", "generate_ca")]
@@ -127,11 +136,9 @@ def test_generate_ca_openwrt(empty_certs, infrastructure, start_buses):
     # successful generation
     notifications = infrastructure.get_notifications(filters=filters)
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "generate_ca",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "generate_ca", "kind": "request"}
+    )
     assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
     assert "task_id" in res["data"]
     task_id = res["data"]["task_id"]
@@ -158,11 +165,9 @@ def test_generate_ca_openwrt(empty_certs, infrastructure, start_buses):
 
     # failed to generate
     notifications = infrastructure.get_notifications(filters=filters)
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "generate_ca",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "generate_ca", "kind": "request"}
+    )
     assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
     assert "task_id" in res["data"]
     task_id = res["data"]["task_id"]
@@ -174,24 +179,20 @@ def test_generate_ca_openwrt(empty_certs, infrastructure, start_buses):
     assert new_notifications[-1]["data"]["task_id"] == task_id
 
 
-@pytest.mark.only_backends(['mock'])
+@pytest.mark.only_backends(["mock"])
 def test_ca_get_status_mock(infrastructure, start_buses):
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
     assert "status" in res["data"]
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 def test_get_status_openwrt_ready(ready_certs, infrastructure, start_buses):
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert res == {
         u"module": u"openvpn",
         u"action": u"get_status",
@@ -203,79 +204,71 @@ def test_get_status_openwrt_ready(ready_certs, infrastructure, start_buses):
                 {u"id": u"03", u"name": u"client2", u"status": u"valid"},
                 {u"id": u"04", u"name": u"client3", u"status": u"generating"},
             ],
-        }
+        },
     }
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 def test_get_status_openwrt_missing(empty_certs, infrastructure, start_buses):
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert res == {
         u"module": u"openvpn",
         u"action": u"get_status",
         u"kind": u"reply",
-        u"data": {u"status": "missing", u"clients": []}
+        u"data": {u"status": "missing", u"clients": []},
     }
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 def test_get_status_openwrt_generating(generating_certs, infrastructure, start_buses):
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert res == {
         u"module": u"openvpn",
         u"action": u"get_status",
         u"kind": u"reply",
-        u"data": {u"status": u"generating", u"clients": []}
+        u"data": {u"status": u"generating", u"clients": []},
     }
 
 
-@pytest.mark.only_backends(['mock'])
+@pytest.mark.only_backends(["mock"])
 def test_generate_client_mock(infrastructure, start_buses):
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert "data" in res
     assert "clients" in res["data"]
     orig_count = len(res["data"]["clients"])
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "generate_client",
-        "kind": "request",
-        "data": {"name": "new.client_1"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "generate_client",
+            "kind": "request",
+            "data": {"name": "new.client_1"},
+        }
+    )
     assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
     assert "task_id" in res["data"]
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert "data" in res
     assert "clients" in res["data"]
     assert len(res["data"]["clients"]) == orig_count + 1
     assert res["data"]["clients"][-1]["name"] == "new.client_1"
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 def test_generate_client_openwrt_success(ready_certs, infrastructure, start_buses):
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert "data" in res
     assert "clients" in res["data"]
     orig_count = len(res["data"]["clients"])
@@ -284,12 +277,14 @@ def test_generate_client_openwrt_success(ready_certs, infrastructure, start_buse
 
     notifications = infrastructure.get_notifications(filters=filters)
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "generate_client",
-        "kind": "request",
-        "data": {"name": "new.client_1"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "generate_client",
+            "kind": "request",
+            "data": {"name": "new.client_1"},
+        }
+    )
     assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
     assert "task_id" in res["data"]
     task_id = res["data"]["task_id"]
@@ -311,25 +306,21 @@ def test_generate_client_openwrt_success(ready_certs, infrastructure, start_buse
     assert new_notifications[-1]["data"]["status"] == "succeeded"
     assert new_notifications[-1]["data"]["task_id"] == task_id
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert "data" in res
     assert "clients" in res["data"]
     assert len(res["data"]["clients"]) == orig_count + 1
     assert res["data"]["clients"][-1]["name"] == "new.client_1"
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 def test_generate_client_openwrt_failed(empty_certs, infrastructure, start_buses):
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert "data" in res
     assert "clients" in res["data"]
     assert len(res["data"]["clients"]) == 0
@@ -338,12 +329,14 @@ def test_generate_client_openwrt_failed(empty_certs, infrastructure, start_buses
 
     notifications = infrastructure.get_notifications(filters=filters)
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "generate_client",
-        "kind": "request",
-        "data": {"name": "new.client_2"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "generate_client",
+            "kind": "request",
+            "data": {"name": "new.client_2"},
+        }
+    )
     assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
     assert "task_id" in res["data"]
     task_id = res["data"]["task_id"]
@@ -357,11 +350,9 @@ def test_generate_client_openwrt_failed(empty_certs, infrastructure, start_buses
     assert new_notifications[-1]["data"]["status"] == "failed"
     assert new_notifications[-1]["data"]["task_id"] == task_id
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert "data" in res
     assert "clients" in res["data"]
     assert len(res["data"]["clients"]) == 0
@@ -369,12 +360,14 @@ def test_generate_client_openwrt_failed(empty_certs, infrastructure, start_buses
 
 def test_generate_client_name_failed(empty_certs, infrastructure, start_buses):
     def wrong_name(name):
-        res = infrastructure.process_message({
-            "module": "openvpn",
-            "action": "generate_client",
-            "kind": "request",
-            "data": {"name": name},
-        })
+        res = infrastructure.process_message(
+            {
+                "module": "openvpn",
+                "action": "generate_client",
+                "kind": "request",
+                "data": {"name": name},
+            }
+        )
         assert "errors" in res
 
     wrong_name("aaa%")
@@ -382,23 +375,23 @@ def test_generate_client_name_failed(empty_certs, infrastructure, start_buses):
     wrong_name("ccc!")
 
 
-@pytest.mark.only_backends(['mock'])
+@pytest.mark.only_backends(["mock"])
 def test_revoke_mock(infrastructure, start_buses):
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "generate_client",
-        "kind": "request",
-        "data": {"name": "new.client_to_revoke"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "generate_client",
+            "kind": "request",
+            "data": {"name": "new.client_to_revoke"},
+        }
+    )
     assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
     assert "task_id" in res["data"]
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert "data" in res
     assert "clients" in res["data"]
     assert res["data"]["clients"][-1]["name"] == "new.client_to_revoke"
@@ -410,12 +403,9 @@ def test_revoke_mock(infrastructure, start_buses):
     notifications = infrastructure.get_notifications(filters=filters)
 
     # existing
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "revoke",
-        "kind": "request",
-        "data": {"id": id_to_revoke},
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "revoke", "kind": "request", "data": {"id": id_to_revoke}}
+    )
     assert "result" in res["data"]
     assert res["data"]["result"] is True
 
@@ -428,17 +418,14 @@ def test_revoke_mock(infrastructure, start_buses):
     }
 
     # non-existing
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "revoke",
-        "kind": "request",
-        "data": {"id": "FF"},
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "revoke", "kind": "request", "data": {"id": "FF"}}
+    )
     assert "result" in res["data"]
     assert res["data"]["result"] is False
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 def test_revoke_openwrt_ready(ready_certs, infrastructure, start_buses):
     filters = [("openvpn", "revoke")]
 
@@ -446,12 +433,9 @@ def test_revoke_openwrt_ready(ready_certs, infrastructure, start_buses):
     notifications = infrastructure.get_notifications(filters=filters)
 
     # existing
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "revoke",
-        "kind": "request",
-        "data": {"id": "03"},
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "revoke", "kind": "request", "data": {"id": "03"}}
+    )
     assert "result" in res["data"]
     assert res["data"]["result"] is True
 
@@ -463,34 +447,26 @@ def test_revoke_openwrt_ready(ready_certs, infrastructure, start_buses):
         u"data": {u"id": "03"},
     }
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert "data" in res
     assert "clients" in res["data"]
     matched = [e for e in res["data"]["clients"] if e["id"] == "03"][0]
     assert matched["status"] == "revoked"
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "revoke",
-        "kind": "request",
-        "data": {"id": "FF"},
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "revoke", "kind": "request", "data": {"id": "FF"}}
+    )
     assert "result" in res["data"]
     assert res["data"]["result"] is False
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 def test_revoke_openwrt_missing(empty_certs, infrastructure, start_buses):
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "revoke",
-        "kind": "request",
-        "data": {"id": "03"},
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "revoke", "kind": "request", "data": {"id": "03"}}
+    )
     assert "result" in res["data"]
     assert res["data"]["result"] is False
 
@@ -499,11 +475,9 @@ def test_delete_ca(ready_certs, infrastructure, start_buses):
     filters = [("openvpn", "delete_ca")]
 
     notifications = infrastructure.get_notifications(filters=filters)
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "delete_ca",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "delete_ca", "kind": "request"}
+    )
     assert "data" in res
     assert "result" in res["data"]
     assert res["data"]["result"] is True
@@ -515,24 +489,29 @@ def test_delete_ca(ready_certs, infrastructure, start_buses):
         u"kind": u"notification",
     }
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert "status" in res["data"]
     assert res["data"]["status"] == "missing"
 
 
 def test_get_settings(uci_configs_init, infrastructure, start_buses):
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_settings",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_settings", "kind": "request"}
+    )
     assert set(res["data"].keys()) == {
-        u"enabled", u"network", u"network_netmask", u"device", u"protocol", u"port", u"routes",
-        u"route_all", u"use_dns", u"server_hostname", "ipv6",
+        u"enabled",
+        u"network",
+        u"network_netmask",
+        u"device",
+        u"protocol",
+        u"port",
+        u"routes",
+        u"route_all",
+        u"use_dns",
+        u"server_hostname",
+        "ipv6",
     }
 
 
@@ -543,92 +522,112 @@ def test_update_settings(
 
     def update(new_settings):
         notifications = infrastructure.get_notifications(filters=filters)
-        res = infrastructure.process_message({
-            "module": "openvpn",
-            "action": "update_settings",
-            "kind": "request",
-            "data": new_settings,
-        })
+        res = infrastructure.process_message(
+            {
+                "module": "openvpn",
+                "action": "update_settings",
+                "kind": "request",
+                "data": new_settings,
+            }
+        )
         assert "result" in res["data"]
         assert res["data"]["result"] is True
 
         notifications = infrastructure.get_notifications(notifications, filters=filters)
         assert notifications[-1]["data"] == new_settings
 
-        res = infrastructure.process_message({
-            "module": "openvpn",
-            "action": "get_settings",
-            "kind": "request",
-        })
+        res = infrastructure.process_message(
+            {"module": "openvpn", "action": "get_settings", "kind": "request"}
+        )
         assert match_subdict(new_settings, res["data"])
 
     update({u"enabled": False})
-    update({
-        "enabled": True,
-        "ipv6": True,
-        "protocol": "udp",
-        "network": "10.111.222.0",
-        "network_netmask": "255.255.254.0",
-        "route_all": False,
-        "use_dns": False,
-    })
-    update({
-        "enabled": True,
-        "ipv6": False,
-        "protocol": "tcp",
-        "network": "10.222.222.0",
-        "network_netmask": "255.255.252.0",
-        "route_all": True,
-        "use_dns": True,
-    })
+    update(
+        {
+            "enabled": True,
+            "ipv6": True,
+            "protocol": "udp",
+            "network": "10.111.222.0",
+            "network_netmask": "255.255.254.0",
+            "route_all": False,
+            "use_dns": False,
+        }
+    )
+    update(
+        {
+            "enabled": True,
+            "ipv6": False,
+            "protocol": "tcp",
+            "network": "10.222.222.0",
+            "network_netmask": "255.255.252.0",
+            "route_all": True,
+            "use_dns": True,
+        }
+    )
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 def test_update_settings_openwrt(
-    uci_configs_init, init_script_result, lock_backend, infrastructure, start_buses,
-    network_restart_command
+    uci_configs_init, init_script_result, infrastructure, start_buses, network_restart_command
 ):
 
-    uci = get_uci_module(lock_backend)
+    uci = get_uci_module(infrastructure.name)
 
     def update(data):
-        res = infrastructure.process_message({
-            "module": "openvpn",
-            "action": "update_settings",
-            "kind": "request",
-            "data": data,
-        })
+        res = infrastructure.process_message(
+            {"module": "openvpn", "action": "update_settings", "kind": "request", "data": data}
+        )
         assert res == {
-            u'action': u'update_settings',
-            u'data': {u'result': True},
-            u'kind': u'reply',
-            u'module': u'openvpn'
+            u"action": u"update_settings",
+            u"data": {u"result": True},
+            u"kind": u"reply",
+            u"module": u"openvpn",
         }
         assert network_restart_was_called([])
         assert sh_was_called(["/etc/init.d/openvpn", "restart"])
 
-    update({
-        "enabled": False,
-    })
+    update({"enabled": False})
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         data = backend.read()
     assert uci.parse_bool(uci.get_option_named(data, "network", "vpn_turris", "enabled")) is False
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_rule", "enabled")) is False
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_rule", "enabled"))
+        is False
+    )
     assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris", "enabled")) is False
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "enabled")) is False
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "enabled")) is False
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "enabled")) is False
-    assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "enabled")) is False
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "enabled")
+        )
+        is False
+    )
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "enabled")
+        )
+        is False
+    )
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "enabled")
+        )
+        is False
+    )
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "enabled")) is False
+    )
 
-    update({
-        "enabled": True,
-        "network": "10.111.222.0",
-        "network_netmask": "255.255.254.0",
-        "route_all": False,
-        "use_dns": False,
-        "ipv6": False,
-        "protocol": "udp",
-    })
+    update(
+        {
+            "enabled": True,
+            "network": "10.111.222.0",
+            "network_netmask": "255.255.254.0",
+            "route_all": False,
+            "use_dns": False,
+            "ipv6": False,
+            "protocol": "udp",
+        }
+    )
 
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         data = backend.read()
@@ -638,7 +637,9 @@ def test_update_settings_openwrt(
     assert uci.parse_bool(uci.get_option_named(data, "network", "vpn_turris", "auto")) is True
     assert uci.parse_bool(uci.get_option_named(data, "network", "vpn_turris", "enabled")) is True
 
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_rule", "enabled")) is True
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_rule", "enabled")) is True
+    )
     assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "name") == "vpn_turris_rule"
     assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "target") == "ACCEPT"
     assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "proto") == "udp"
@@ -653,52 +654,107 @@ def test_update_settings_openwrt(
     assert uci.get_option_named(data, "firewall", "vpn_turris", "output") == "ACCEPT"
     assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris", "masq")) is True
 
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "enabled")) is True
-    assert uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "src") == "vpn_turris"
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "enabled")
+        )
+        is True
+    )
+    assert (
+        uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "src") == "vpn_turris"
+    )
     assert uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "dest") == "lan"
 
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "enabled")) is True
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "enabled")
+        )
+        is True
+    )
     assert uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "src") == "lan"
-    assert uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "dest") == "vpn_turris"
+    assert (
+        uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "dest") == "vpn_turris"
+    )
 
     # no default route
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "enabled")) is False
-    assert uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "src") == "vpn_turris"
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "enabled")
+        )
+        is False
+    )
+    assert (
+        uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "src") == "vpn_turris"
+    )
     assert uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "dest") == "wan"
 
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "enabled")) is True
-    assert uci.get_option_named(data, "openvpn", "server_turris", "server") == "10.111.222.0 255.255.254.0"
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "server")
+        == "10.111.222.0 255.255.254.0"
+    )
     assert uci.get_option_named(data, "openvpn", "server_turris", "port") == "1194"
     assert uci.get_option_named(data, "openvpn", "server_turris", "proto") == "udp"
     assert uci.get_option_named(data, "openvpn", "server_turris", "dev") == "tun_turris"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "ca") == "/etc/ssl/ca/openvpn/ca.crt"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "crl_verify") == "/etc/ssl/ca/openvpn/ca.crl"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "cert") == "/etc/ssl/ca/openvpn/01.crt"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "key") == "/etc/ssl/ca/openvpn/01.key"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "dh") == "/etc/dhparam/dh-default.pem"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "ifconfig_pool_persist") == "/tmp/ipp.txt"
-    assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "duplicate_cn")) is False
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "ca") == "/etc/ssl/ca/openvpn/ca.crt"
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "crl_verify")
+        == "/etc/ssl/ca/openvpn/ca.crl"
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "cert")
+        == "/etc/ssl/ca/openvpn/01.crt"
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "key")
+        == "/etc/ssl/ca/openvpn/01.key"
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "dh")
+        == "/etc/dhparam/dh-default.pem"
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "ifconfig_pool_persist")
+        == "/tmp/ipp.txt"
+    )
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "duplicate_cn"))
+        is False
+    )
     assert uci.get_option_named(data, "openvpn", "server_turris", "keepalive") == "10 120"
     assert not uci.get_option_named(data, "openvpn", "server_turris", "compress", False)
     assert not uci.get_option_named(data, "openvpn", "server_turris", "comp_lzo", False)
-    assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_key")) is True
-    assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_tun")) is True
-    assert uci.get_option_named(data, "openvpn", "server_turris", "status") == "/tmp/openvpn-status.log"
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_key"))
+        is True
+    )
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_tun"))
+        is True
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "status")
+        == "/tmp/openvpn-status.log"
+    )
     assert uci.get_option_named(data, "openvpn", "server_turris", "verb") == "3"
     assert uci.get_option_named(data, "openvpn", "server_turris", "mute") == "20"
     push_options = uci.get_option_named(data, "openvpn", "server_turris", "push")
     assert len(push_options) == 1
     assert "route 192.168.1.0 255.255.255.0" in push_options  # Default lan network
 
-    update({
-        "enabled": True,
-        "network": "10.222.222.0",
-        "network_netmask": "255.255.252.0",
-        "route_all": True,
-        "use_dns": True,
-        "ipv6": True,
-        "protocol": "tcp",
-    })
+    update(
+        {
+            "enabled": True,
+            "network": "10.222.222.0",
+            "network_netmask": "255.255.252.0",
+            "route_all": True,
+            "use_dns": True,
+            "ipv6": True,
+            "protocol": "tcp",
+        }
+    )
 
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         data = backend.read()
@@ -708,7 +764,9 @@ def test_update_settings_openwrt(
     assert uci.parse_bool(uci.get_option_named(data, "network", "vpn_turris", "auto")) is True
     assert uci.parse_bool(uci.get_option_named(data, "network", "vpn_turris", "enabled")) is True
 
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_rule", "enabled")) is True
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_rule", "enabled")) is True
+    )
     assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "name") == "vpn_turris_rule"
     assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "target") == "ACCEPT"
     assert uci.get_option_named(data, "firewall", "vpn_turris_rule", "proto") == "tcp"
@@ -723,37 +781,90 @@ def test_update_settings_openwrt(
     assert uci.get_option_named(data, "firewall", "vpn_turris", "output") == "ACCEPT"
     assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris", "masq")) is True
 
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "enabled")) is True
-    assert uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "src") == "vpn_turris"
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "enabled")
+        )
+        is True
+    )
+    assert (
+        uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "src") == "vpn_turris"
+    )
     assert uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "dest") == "lan"
 
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "enabled")) is True
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "enabled")
+        )
+        is True
+    )
     assert uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "src") == "lan"
-    assert uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "dest") == "vpn_turris"
+    assert (
+        uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "dest") == "vpn_turris"
+    )
 
     # redirect to default route
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "enabled")) is True
-    assert uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "src") == "vpn_turris"
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "enabled")
+        )
+        is True
+    )
+    assert (
+        uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "src") == "vpn_turris"
+    )
     assert uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "dest") == "wan"
 
     assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "enabled")) is True
-    assert uci.get_option_named(data, "openvpn", "server_turris", "server") == "10.222.222.0 255.255.252.0"
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "server")
+        == "10.222.222.0 255.255.252.0"
+    )
     assert uci.get_option_named(data, "openvpn", "server_turris", "port") == "1194"
     assert uci.get_option_named(data, "openvpn", "server_turris", "proto") == "tcp6-server"
     assert uci.get_option_named(data, "openvpn", "server_turris", "dev") == "tun_turris"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "ca") == "/etc/ssl/ca/openvpn/ca.crt"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "crl_verify") == "/etc/ssl/ca/openvpn/ca.crl"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "cert") == "/etc/ssl/ca/openvpn/01.crt"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "key") == "/etc/ssl/ca/openvpn/01.key"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "dh") == "/etc/dhparam/dh-default.pem"
-    assert uci.get_option_named(data, "openvpn", "server_turris", "ifconfig_pool_persist") == "/tmp/ipp.txt"
-    assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "duplicate_cn")) is False
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "ca") == "/etc/ssl/ca/openvpn/ca.crt"
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "crl_verify")
+        == "/etc/ssl/ca/openvpn/ca.crl"
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "cert")
+        == "/etc/ssl/ca/openvpn/01.crt"
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "key")
+        == "/etc/ssl/ca/openvpn/01.key"
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "dh")
+        == "/etc/dhparam/dh-default.pem"
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "ifconfig_pool_persist")
+        == "/tmp/ipp.txt"
+    )
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "duplicate_cn"))
+        is False
+    )
     assert uci.get_option_named(data, "openvpn", "server_turris", "keepalive") == "10 120"
     assert not uci.get_option_named(data, "openvpn", "server_turris", "compress", False)
     assert not uci.get_option_named(data, "openvpn", "server_turris", "comp_lzo", False)
-    assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_key")) is True
-    assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_tun")) is True
-    assert uci.get_option_named(data, "openvpn", "server_turris", "status") == "/tmp/openvpn-status.log"
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_key"))
+        is True
+    )
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "persist_tun"))
+        is True
+    )
+    assert (
+        uci.get_option_named(data, "openvpn", "server_turris", "status")
+        == "/tmp/openvpn-status.log"
+    )
     assert uci.get_option_named(data, "openvpn", "server_turris", "verb") == "3"
     assert uci.get_option_named(data, "openvpn", "server_turris", "mute") == "20"
     push_options = uci.get_option_named(data, "openvpn", "server_turris", "push")
@@ -762,158 +873,163 @@ def test_update_settings_openwrt(
     assert "dhcp-option DNS 10.222.222.1" in push_options  # Default router ip in lan
     assert "redirect-gateway def1" in push_options  # Default router ip in lan
 
-    update({
-        "enabled": False,
-    })
+    update({"enabled": False})
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         data = backend.read()
     assert uci.parse_bool(uci.get_option_named(data, "network", "vpn_turris", "enabled")) is False
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_rule", "enabled")) is False
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_rule", "enabled"))
+        is False
+    )
     assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris", "enabled")) is False
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "enabled")) is False
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "enabled")) is False
-    assert uci.parse_bool(uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "enabled")) is False
-    assert uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "enabled")) is False
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_in", "enabled")
+        )
+        is False
+    )
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_lan_out", "enabled")
+        )
+        is False
+    )
+    assert (
+        uci.parse_bool(
+            uci.get_option_named(data, "firewall", "vpn_turris_forward_wan_out", "enabled")
+        )
+        is False
+    )
+    assert (
+        uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "enabled")) is False
+    )
 
 
-@pytest.mark.only_backends(['mock'])
+@pytest.mark.only_backends(["mock"])
 @pytest.mark.parametrize("hostname", ["", "10.20.30.40"])
 def test_get_client_config_mock(infrastructure, hostname, start_buses):
     def check_hostname(server_hostname):
         if server_hostname:
-            res = infrastructure.process_message({
-                "module": "openvpn",
-                "action": "get_settings",
-                "kind": "request",
-            })
+            res = infrastructure.process_message(
+                {"module": "openvpn", "action": "get_settings", "kind": "request"}
+            )
             assert res["data"]["server_hostname"] == server_hostname
 
     query_data = {"hostname": hostname} if hostname else {}
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "generate_ca",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "generate_ca", "kind": "request"}
+    )
     assert "errors" not in res
 
     query_data["id"] = "FF"
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": query_data,
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
+    )
     assert {"status"} == set(res["data"].keys())
     assert res["data"]["status"] == "not_found"
     check_hostname(hostname)
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "generate_client",
-        "kind": "request",
-        "data": {"name": "get_client_config"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "generate_client",
+            "kind": "request",
+            "data": {"name": "get_client_config"},
+        }
+    )
     assert "errors" not in res
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_status",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_status", "kind": "request"}
+    )
     assert "errors" not in res
     assert res["data"]["clients"][-1]["name"] == "get_client_config"
     client = res["data"]["clients"][-1]
 
     query_data["id"] = client["id"]
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": query_data,
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
+    )
     assert {"status", "config"} == set(res["data"].keys())
     assert res["data"]["status"] == "valid"
     check_hostname(hostname)
     if hostname:
         assert hostname in res["data"]["config"]
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "revoke",
-        "kind": "request",
-        "data": {"id": client["id"]},
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "revoke", "kind": "request", "data": {"id": client["id"]}}
+    )
     assert "result" in res["data"]
     assert res["data"]["result"] is True
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": query_data,
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
+    )
     assert {"status"} == set(res["data"].keys())
     assert res["data"]["status"] == "revoked"
     check_hostname(hostname)
 
 
 AVAILABLE_PROTOCOLS = [
-    "tcp", "udp", "tcp-server", "tcp4", "udp4", "tcp4-server", "tcp6", "udp6", "tcp6-server"
+    "tcp",
+    "udp",
+    "tcp-server",
+    "tcp4",
+    "udp4",
+    "tcp4-server",
+    "tcp6",
+    "udp6",
+    "tcp6-server",
 ]
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 @pytest.mark.parametrize("hostname", ["", "10.30.50.70"])
 @pytest.mark.parametrize("proto", AVAILABLE_PROTOCOLS)
 def test_get_client_config_openwrt(
-    ready_certs, uci_configs_init, init_script_result, lock_backend, infrastructure, start_buses,
-    hostname, file_root_init, proto
+    ready_certs,
+    uci_configs_init,
+    init_script_result,
+    infrastructure,
+    start_buses,
+    hostname,
+    file_root_init,
+    proto,
 ):
 
-    uci = get_uci_module(lock_backend)
+    uci = get_uci_module(infrastructure.name)
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         backend.add_section("openvpn", "openvpn", "server_turris")
         backend.set_option("openvpn", "server_turris", "proto", proto)
 
     def check_hostname(server_hostname):
         if server_hostname:
-            res = infrastructure.process_message({
-                "module": "openvpn",
-                "action": "get_settings",
-                "kind": "request",
-            })
+            res = infrastructure.process_message(
+                {"module": "openvpn", "action": "get_settings", "kind": "request"}
+            )
             assert res["data"]["server_hostname"] == server_hostname
 
     query_data = {"hostname": hostname} if hostname else {}
 
     query_data["id"] = "FF"
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": query_data,
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
+    )
     assert {"status"} == set(res["data"].keys())
     assert res["data"]["status"] == "not_found"
     check_hostname(hostname)
 
     query_data["id"] = "02"
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": query_data,
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
+    )
     assert {"status"} == set(res["data"].keys())
     assert res["data"]["status"] == "revoked"
     check_hostname(hostname)
 
     query_data["id"] = "03"
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": query_data,
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
+    )
     assert {"status", "config"} == set(res["data"].keys())
     assert res["data"]["status"] == "valid"
     check_hostname(hostname)
@@ -943,45 +1059,50 @@ def test_get_client_config_openwrt(
     #    assert "compress" in res["data"]["config"]
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 @pytest.mark.parametrize("proto", AVAILABLE_PROTOCOLS)
 def test_available_protocols(
-    uci_configs_init, init_script_result, lock_backend, infrastructure, start_buses, proto
+    uci_configs_init, init_script_result, infrastructure, start_buses, proto
 ):
-    uci = get_uci_module(lock_backend)
+    uci = get_uci_module(infrastructure.name)
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         backend.add_section("openvpn", "openvpn", "server_turris")
         backend.set_option("openvpn", "server_turris", "proto", proto)
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_settings",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "openvpn", "action": "get_settings", "kind": "request"}
+    )
     assert res["data"]["protocol"] == proto[:3]
     assert res["data"]["ipv6"] == ("6" in proto)
 
 
-@pytest.mark.only_backends(['openwrt'])
+@pytest.mark.only_backends(["openwrt"])
 def test_get_client_config_compress_openwrt(
-    ready_certs, uci_configs_init, init_script_result, lock_backend, infrastructure, start_buses,
-    file_root_init, network_restart_command,
+    ready_certs,
+    uci_configs_init,
+    init_script_result,
+    infrastructure,
+    start_buses,
+    file_root_init,
+    network_restart_command,
 ):
     def update():
-        res = infrastructure.process_message({
-            "module": "openvpn",
-            "action": "update_settings",
-            "kind": "request",
-            "data": {
-                "enabled": True,
-                "ipv6": False,
-                "protocol": "tcp",
-                "network": "10.222.222.0",
-                "network_netmask": "255.255.252.0",
-                "route_all": False,
-                "use_dns": False,
-            },
-        })
+        res = infrastructure.process_message(
+            {
+                "module": "openvpn",
+                "action": "update_settings",
+                "kind": "request",
+                "data": {
+                    "enabled": True,
+                    "ipv6": False,
+                    "protocol": "tcp",
+                    "network": "10.222.222.0",
+                    "network_netmask": "255.255.252.0",
+                    "route_all": False,
+                    "use_dns": False,
+                },
+            }
+        )
         assert "result" in res["data"]
         assert res["data"]["result"] is True
 
@@ -989,38 +1110,44 @@ def test_get_client_config_compress_openwrt(
     update()
 
     # default no compress
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": {"id": "03", "hostname": "172.20.20.20"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "get_client_config",
+            "kind": "request",
+            "data": {"id": "03", "hostname": "172.20.20.20"},
+        }
+    )
     assert "compress " not in res["data"]["config"]
     assert "comp-lzo" not in res["data"]["config"]
 
     # compress present
-    uci = get_uci_module(lock_backend)
+    uci = get_uci_module(infrastructure.name)
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         backend.add_section("openvpn", "openvpn", "server_turris")
         backend.set_option("openvpn", "server_turris", "compress", "lz4")
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": {"id": "03", "hostname": "172.20.20.20"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "get_client_config",
+            "kind": "request",
+            "data": {"id": "03", "hostname": "172.20.20.20"},
+        }
+    )
     assert "compress lz4" in res["data"]["config"]
     assert "comp-lzo" not in res["data"]["config"]
 
     # survive update
     update()
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": {"id": "03", "hostname": "172.20.20.20"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "get_client_config",
+            "kind": "request",
+            "data": {"id": "03", "hostname": "172.20.20.20"},
+        }
+    )
     assert "compress lz4" in res["data"]["config"]
     assert "comp-lzo" not in res["data"]["config"]
 
@@ -1028,12 +1155,14 @@ def test_get_client_config_compress_openwrt(
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         backend.del_option("openvpn", "server_turris", "compress")
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": {"id": "03", "hostname": "172.20.20.20"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "get_client_config",
+            "kind": "request",
+            "data": {"id": "03", "hostname": "172.20.20.20"},
+        }
+    )
     assert "compress " not in res["data"]["config"]
     assert "comp-lzo" not in res["data"]["config"]
 
@@ -1041,22 +1170,26 @@ def test_get_client_config_compress_openwrt(
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         backend.set_option("openvpn", "server_turris", "comp_lzo", "yes")
 
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": {"id": "03", "hostname": "172.20.20.20"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "get_client_config",
+            "kind": "request",
+            "data": {"id": "03", "hostname": "172.20.20.20"},
+        }
+    )
     assert "compress lzo" in res["data"]["config"]
     assert "comp-lzo" not in res["data"]["config"]
 
     # survive update
     update()
-    res = infrastructure.process_message({
-        "module": "openvpn",
-        "action": "get_client_config",
-        "kind": "request",
-        "data": {"id": "03", "hostname": "172.20.20.20"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "get_client_config",
+            "kind": "request",
+            "data": {"id": "03", "hostname": "172.20.20.20"},
+        }
+    )
     assert "compress lzo" in res["data"]["config"]
     assert "comp-lzo" not in res["data"]["config"]
