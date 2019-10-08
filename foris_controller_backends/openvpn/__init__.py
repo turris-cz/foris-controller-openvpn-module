@@ -497,10 +497,11 @@ verb 3
         if not hostname:
             # try to figure out wan ip
             try:
-                addresses = WanStatusCommands().get_status()["ipv4-address"]
-                hostname = addresses[0]["address"]
-            except Exception:
-                hostname = "<server_adddress>"
+                addresses = WanStatusCommands().get_status()["ipv4"]
+                hostname = addresses[0]
+            except Exception as e:
+                logger.warning("%r", e)
+                hostname = "<server_address>"
 
         cipher_section = "cipher %s" % cipher if cipher else ""
         if tls_auth_path:
