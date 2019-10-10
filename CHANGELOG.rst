@@ -1,3 +1,9 @@
+0.6.2 (2019-10-10)
+------------------
+
+* fix router ip address autodetection
+* tests: refactoring
+
 0.6.1 (2019-08-12)
 ------------------
 * use ipaddress module instead of foris_controller_utils.IPv4 and remove IPv4
