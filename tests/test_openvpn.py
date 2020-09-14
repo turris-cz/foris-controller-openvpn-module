@@ -713,7 +713,7 @@ def test_update_settings_openwrt(
     )
     assert (
         uci.get_option_named(data, "openvpn", "server_turris", "dh")
-        == "/etc/dhparam/dh-default.pem"
+        == "/etc/ssl/ca/openvpn/dhparam.pem"
     )
     assert (
         uci.get_option_named(data, "openvpn", "server_turris", "ifconfig_pool_persist")
@@ -840,7 +840,7 @@ def test_update_settings_openwrt(
     )
     assert (
         uci.get_option_named(data, "openvpn", "server_turris", "dh")
-        == "/etc/dhparam/dh-default.pem"
+        == "/etc/ssl/ca/openvpn/dhparam.pem"
     )
     assert (
         uci.get_option_named(data, "openvpn", "server_turris", "ifconfig_pool_persist")

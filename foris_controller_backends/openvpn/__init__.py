@@ -55,7 +55,7 @@ class CaGenAsync(AsyncCommand):
             return handler
 
         task_id = self.start_process(
-            ["/usr/bin/turris-cagen", "new_ca", "openvpn", "gen_ca", "gen_server", "turris"],
+            ["/usr/bin/turris-cagen", "new_ca", "openvpn", "gen_ca", "gen_dh", "gen_server", "turris"],
             [
                 (r"^gen_ca: started", gen_handler("ca_generating")),
                 (r"^gen_ca: finished", gen_handler("ca_done")),
@@ -269,7 +269,7 @@ class OpenvpnUci(object):
                 )
                 backend.set_option("openvpn", "server_turris", "cert", "/etc/ssl/ca/openvpn/01.crt")
                 backend.set_option("openvpn", "server_turris", "key", "/etc/ssl/ca/openvpn/01.key")
-                backend.set_option("openvpn", "server_turris", "dh", "/etc/dhparam/dh-default.pem")
+                backend.set_option("openvpn", "server_turris", "dh", "/etc/ssl/ca/openvpn/dhparam.pem")
                 backend.set_option(
                     "openvpn", "server_turris", "server", "%s %s" % (network, network_netmask)
                 )
