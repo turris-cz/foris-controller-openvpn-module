@@ -423,10 +423,11 @@
                             "type": "object",
                             "properties": {
                                 "status": {"enum": ["valid"]},
-                                "config": {"type": "string"}
+                                "config": {"type": "string"},
+                                "name": {"$ref": "#/definitions/openvpn_cert_name"}
                             },
                             "additionalProperties": false,
-                            "required": ["status", "config"]
+                            "required": ["status", "config", "name"]
                         }
                     ]
                 }

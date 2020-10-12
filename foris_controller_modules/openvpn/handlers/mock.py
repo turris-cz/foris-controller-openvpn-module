@@ -55,7 +55,7 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
     def get_status(self):
         return {
             "status": "ready" if MockOpenvpnHandler.ca_generated else "missing",
-            "clients": MockOpenvpnHandler.clients,
+            "clients": MockOpenvpnHandler.clients
         }
 
     @logger_wrapper(logger)
@@ -116,4 +116,8 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
             return {"status": "not_found"}
         if filtered[0]["status"] == "revoked":
             return {"status": "revoked"}
-        return {"status": "valid", "config": "%s" % hostname if hostname else "<guessed_hostname>"}
+        return {
+            "status": "valid",
+            "config": "%s" % hostname if hostname else "<guessed_hostname>",
+            "name": filtered[0]["name"]
+            }

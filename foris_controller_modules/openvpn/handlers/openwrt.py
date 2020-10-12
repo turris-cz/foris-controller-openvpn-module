@@ -88,4 +88,5 @@ class OpenwrtOpenvpnHandler(Handler, BaseOpenwrtHandler):
         return {
             "status": "valid",
             "config": self.files.get_config(id=id, hostname=hostname, **options),
+            "name": filtered[0]["name"]
         }

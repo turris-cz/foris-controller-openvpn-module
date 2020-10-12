@@ -124,7 +124,7 @@ def test_generate_ca_mock(infrastructure, start_buses):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "generate_ca", "kind": "request"}
     )
-    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert res.keys() == {"module", "action", "kind", "data"}
     assert "task_id" in res["data"]
 
 
@@ -139,7 +139,7 @@ def test_generate_ca_openwrt(empty_certs, infrastructure, start_buses):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "generate_ca", "kind": "request"}
     )
-    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert res.keys() == {"module", "action", "kind", "data"}
     assert "task_id" in res["data"]
     task_id = res["data"]["task_id"]
 
@@ -168,7 +168,7 @@ def test_generate_ca_openwrt(empty_certs, infrastructure, start_buses):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "generate_ca", "kind": "request"}
     )
-    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert res.keys() == {"module", "action", "kind", "data"}
     assert "task_id" in res["data"]
     task_id = res["data"]["task_id"]
 
@@ -184,7 +184,7 @@ def test_ca_get_status_mock(infrastructure, start_buses):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
-    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert res.keys() == {"module", "action", "kind", "data"}
     assert "status" in res["data"]
 
 
@@ -194,15 +194,15 @@ def test_get_status_openwrt_ready(ready_certs, infrastructure, start_buses):
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
     assert res == {
-        u"module": u"openvpn",
-        u"action": u"get_status",
-        u"kind": u"reply",
-        u"data": {
-            u"status": u"ready",
-            u"clients": [
-                {u"id": u"02", u"name": u"client1", u"status": u"revoked"},
-                {u"id": u"03", u"name": u"client2", u"status": u"valid"},
-                {u"id": u"04", u"name": u"client3", u"status": u"generating"},
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "reply",
+        "data": {
+            "status": "ready",
+            "clients": [
+                {"id": "02", "name": "client1", "status": "revoked"},
+                {"id": "03", "name": "client2", "status": "valid"},
+                {"id": "04", "name": "client3", "status": "generating"},
             ],
         },
     }
@@ -214,10 +214,10 @@ def test_get_status_openwrt_missing(empty_certs, infrastructure, start_buses):
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
     assert res == {
-        u"module": u"openvpn",
-        u"action": u"get_status",
-        u"kind": u"reply",
-        u"data": {u"status": "missing", u"clients": []},
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "reply",
+        "data": {"status": "missing", "clients": []},
     }
 
 
@@ -227,10 +227,10 @@ def test_get_status_openwrt_generating(generating_certs, infrastructure, start_b
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
     assert res == {
-        u"module": u"openvpn",
-        u"action": u"get_status",
-        u"kind": u"reply",
-        u"data": {u"status": u"generating", u"clients": []},
+        "module": "openvpn",
+        "action": "get_status",
+        "kind": "reply",
+        "data": {"status": "generating", "clients": []},
     }
 
 
@@ -251,7 +251,7 @@ def test_generate_client_mock(infrastructure, start_buses):
             "data": {"name": "new.client_1"},
         }
     )
-    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert res.keys() == {"module", "action", "kind", "data"}
     assert "task_id" in res["data"]
 
     res = infrastructure.process_message(
@@ -285,7 +285,7 @@ def test_generate_client_openwrt_success(ready_certs, infrastructure, start_buse
             "data": {"name": "new.client_1"},
         }
     )
-    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert res.keys() == {"module", "action", "kind", "data"}
     assert "task_id" in res["data"]
     task_id = res["data"]["task_id"]
 
@@ -337,7 +337,7 @@ def test_generate_client_openwrt_failed(empty_certs, infrastructure, start_buses
             "data": {"name": "new.client_2"},
         }
     )
-    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert res.keys() == {"module", "action", "kind", "data"}
     assert "task_id" in res["data"]
     task_id = res["data"]["task_id"]
 
@@ -386,7 +386,7 @@ def test_revoke_mock(infrastructure, start_buses):
             "data": {"name": "new.client_to_revoke"},
         }
     )
-    assert set(res.keys()) == {u"module", u"action", u"kind", u"data"}
+    assert res.keys() == {"module", "action", "kind", "data"}
     assert "task_id" in res["data"]
 
     res = infrastructure.process_message(
@@ -411,10 +411,10 @@ def test_revoke_mock(infrastructure, start_buses):
 
     notifications = infrastructure.get_notifications(notifications, filters=filters)
     assert notifications[-1] == {
-        u"module": u"openvpn",
-        u"action": u"revoke",
-        u"kind": u"notification",
-        u"data": {u"id": id_to_revoke},
+        "module": "openvpn",
+        "action": "revoke",
+        "kind": "notification",
+        "data": {"id": id_to_revoke},
     }
 
     # non-existing
@@ -441,10 +441,10 @@ def test_revoke_openwrt_ready(ready_certs, infrastructure, start_buses):
 
     notifications = infrastructure.get_notifications(notifications, filters=filters)
     assert notifications[-1] == {
-        u"module": u"openvpn",
-        u"action": u"revoke",
-        u"kind": u"notification",
-        u"data": {u"id": "03"},
+        "module": "openvpn",
+        "action": "revoke",
+        "kind": "notification",
+        "data": {"id": "03"},
     }
 
     res = infrastructure.process_message(
@@ -484,9 +484,9 @@ def test_delete_ca(ready_certs, infrastructure, start_buses):
 
     notifications = infrastructure.get_notifications(notifications, filters=filters)
     assert notifications[-1] == {
-        u"module": u"openvpn",
-        u"action": u"delete_ca",
-        u"kind": u"notification",
+        "module": "openvpn",
+        "action": "delete_ca",
+        "kind": "notification",
     }
 
     res = infrastructure.process_message(
@@ -500,17 +500,17 @@ def test_get_settings(uci_configs_init, infrastructure, start_buses):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_settings", "kind": "request"}
     )
-    assert set(res["data"].keys()) == {
-        u"enabled",
-        u"network",
-        u"network_netmask",
-        u"device",
-        u"protocol",
-        u"port",
-        u"routes",
-        u"route_all",
-        u"use_dns",
-        u"server_hostname",
+    assert res["data"].keys() == {
+        "enabled",
+        "network",
+        "network_netmask",
+        "device",
+        "protocol",
+        "port",
+        "routes",
+        "route_all",
+        "use_dns",
+        "server_hostname",
         "ipv6",
     }
 
@@ -541,7 +541,7 @@ def test_update_settings(
         )
         assert match_subdict(new_settings, res["data"])
 
-    update({u"enabled": False})
+    update({"enabled": False})
     update(
         {
             "enabled": True,
@@ -578,10 +578,10 @@ def test_update_settings_openwrt(
             {"module": "openvpn", "action": "update_settings", "kind": "request", "data": data}
         )
         assert res == {
-            u"action": u"update_settings",
-            u"data": {u"result": True},
-            u"kind": u"reply",
-            u"module": u"openvpn",
+            "action": "update_settings",
+            "data": {"result": True},
+            "kind": "reply",
+            "module": "openvpn",
         }
         assert network_restart_was_called([])
         assert sh_was_called(["/etc/init.d/openvpn", "restart"])
@@ -925,7 +925,7 @@ def test_get_client_config_mock(infrastructure, hostname, start_buses):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
     )
-    assert {"status"} == set(res["data"].keys())
+    assert {"status"} == res["data"].keys()
     assert res["data"]["status"] == "not_found"
     check_hostname(hostname)
 
@@ -934,7 +934,7 @@ def test_get_client_config_mock(infrastructure, hostname, start_buses):
             "module": "openvpn",
             "action": "generate_client",
             "kind": "request",
-            "data": {"name": "get_client_config"},
+            "data": {"name": "station1"},
         }
     )
     assert "errors" not in res
@@ -942,15 +942,16 @@ def test_get_client_config_mock(infrastructure, hostname, start_buses):
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
     assert "errors" not in res
-    assert res["data"]["clients"][-1]["name"] == "get_client_config"
+    assert res["data"]["clients"][-1]["name"] == "station1"
     client = res["data"]["clients"][-1]
 
     query_data["id"] = client["id"]
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
     )
-    assert {"status", "config"} == set(res["data"].keys())
+    assert {"status", "config", "name"} == res["data"].keys()
     assert res["data"]["status"] == "valid"
+    assert res["data"]["name"] == "station1"
     check_hostname(hostname)
     if hostname:
         assert hostname in res["data"]["config"]
@@ -964,7 +965,7 @@ def test_get_client_config_mock(infrastructure, hostname, start_buses):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
     )
-    assert {"status"} == set(res["data"].keys())
+    assert {"status"} == res["data"].keys()
     assert res["data"]["status"] == "revoked"
     check_hostname(hostname)
 
@@ -1014,7 +1015,7 @@ def test_get_client_config_openwrt(
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
     )
-    assert {"status"} == set(res["data"].keys())
+    assert {"status"} == res["data"].keys()
     assert res["data"]["status"] == "not_found"
     check_hostname(hostname)
 
@@ -1022,7 +1023,7 @@ def test_get_client_config_openwrt(
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
     )
-    assert {"status"} == set(res["data"].keys())
+    assert {"status"} == res["data"].keys()
     assert res["data"]["status"] == "revoked"
     check_hostname(hostname)
 
@@ -1030,8 +1031,9 @@ def test_get_client_config_openwrt(
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_client_config", "kind": "request", "data": query_data}
     )
-    assert {"status", "config"} == set(res["data"].keys())
+    assert {"status", "config", "name"} == res["data"].keys()
     assert res["data"]["status"] == "valid"
+    assert res["data"]["name"] == "client2"
     check_hostname(hostname)
     if hostname:
         assert hostname in res["data"]["config"]
