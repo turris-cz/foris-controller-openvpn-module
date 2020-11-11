@@ -28,8 +28,8 @@ Openvpn module for foris-controller
 setup(
     name='foris-controller-openvpn-module',
     version=__version__,
-    author='CZ.NIC, z.s.p.o. (http://www.nic.cz/)',
-    author_email='stepan.henek@nic.cz',
+    author='CZ.NIC, z.s.p.o. (https://www.nic.cz/)',
+    author_email='packaging@turris.cz',
     packages=[
         'foris_controller_openvpn_module',
         'foris_controller_backends',

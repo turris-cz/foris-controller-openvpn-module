@@ -1,3 +1,10 @@
+0.6.3 (2020-11-11)
+------------------
+
+* return certificate name within get_client_config api call
+* generate dhparam with turris-cagen instead of using separate dhparam
+* python2 code cleanup
+
 0.6.2 (2019-10-10)
 ------------------
 
