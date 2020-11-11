@@ -120,4 +120,4 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
             "status": "valid",
             "config": "%s" % hostname if hostname else "<guessed_hostname>",
             "name": filtered[0]["name"]
-            }
+        }
