@@ -593,6 +593,9 @@ verb 3
             tls_auth_section = ""
         compress = "compress %s" % compress if compress else ""
 
+        # convert proto
+        proto = proto[:3] + ("-client" if "server" in proto else "")
+
         return self.CONFIG_TEMPLATE % dict(
             dev=dev,
             proto=proto.replace("server", "client"),

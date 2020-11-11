@@ -1070,22 +1070,22 @@ def test_get_client_config_mock(infrastructure, hostname):
     check_hostname(hostname)
 
 
-AVAILABLE_PROTOCOLS = [
-    "tcp",
-    "udp",
-    "tcp-server",
-    "tcp4",
-    "udp4",
-    "tcp4-server",
-    "tcp6",
-    "udp6",
-    "tcp6-server",
+PROTOCOLS_MAP = [
+    ("tcp", "tcp"),
+    ("udp", "udp"),
+    ("tcp-server", "tcp-client"),
+    ("tcp4", "tcp"),
+    ("udp4", "udp"),
+    ("tcp4-server", "tcp-client"),
+    ("tcp6", "tcp"),
+    ("udp6", "udp"),
+    ("tcp6-server", "tcp-client"),
 ]
 
 
 @pytest.mark.only_backends(["openwrt"])
 @pytest.mark.parametrize("hostname", ["", "10.30.50.70"])
-@pytest.mark.parametrize("proto", AVAILABLE_PROTOCOLS)
+@pytest.mark.parametrize("proto,client_proto", PROTOCOLS_MAP)
 def test_get_client_config_openwrt(
     ready_certs,
     uci_configs_init,
@@ -1094,6 +1094,7 @@ def test_get_client_config_openwrt(
     hostname,
     file_root_init,
     proto,
+    client_proto,
 ):
 
     uci = get_uci_module(infrastructure.name)
@@ -1137,10 +1138,7 @@ def test_get_client_config_openwrt(
     if hostname:
         assert hostname in res["data"]["config"]
     assert "dev tun_turris" in res["data"]["config"]
-    if proto in ["tcp-server", "tcp4-server", "tcp6-server"]:
-        assert "proto %s" % proto.replace("server", "client") in res["data"]["config"]
-    else:
-        assert "proto %s" % proto in res["data"]["config"]
+    assert f"proto {client_proto}\n" in res["data"]["config"]
     assert "<ca>" in res["data"]["config"]
     assert "</ca>" in res["data"]["config"]
     assert "<cert>" in res["data"]["config"]
@@ -1161,9 +1159,9 @@ def test_get_client_config_openwrt(
 
 
 @pytest.mark.only_backends(["openwrt"])
-@pytest.mark.parametrize("proto", AVAILABLE_PROTOCOLS)
+@pytest.mark.parametrize("proto,client_proto", PROTOCOLS_MAP)
 def test_available_protocols(
-    uci_configs_init, init_script_result, infrastructure, proto
+    uci_configs_init, init_script_result, infrastructure, proto, client_proto,
 ):
     uci = get_uci_module(infrastructure.name)
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
