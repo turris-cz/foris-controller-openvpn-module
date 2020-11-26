@@ -223,7 +223,7 @@ class OpenvpnUci:
             ]
             device = get_option_named(data, "openvpn", "server_turris", "dev", "")
             protocol = get_option_named(data, "openvpn", "server_turris", "proto", "udp")
-            ipv6 = "6" in protocol  # tcp6, tcp6-server, udp6
+            ipv6 = "6" in protocol  # tcp6-server, udp6
             protocol = "tcp" if protocol.startswith("tcp") else "udp"
             port = int(get_option_named(data, "openvpn", "server_turris", "port", "0"))
             use_dns = (
@@ -571,6 +571,26 @@ verb 3
 
     BASE_CERT_PATH = "/etc/ssl/ca/openvpn"
 
+    # pairs of server_proto <-> client_proto
+    # used for generating proper client config
+    #
+    # for instance: TCP needs different proto on server and client
+    # tcp-server (server) and tcp-client (client)
+    # NOTE: we do not use `remote <addr> <port> <proto> in client config, so we can probably ignore the `tcp`,
+    # `tcp{4,6}` and `udp{4,6}` options.
+    # For more details see OpenVPN manual.
+    PROTOCOLS_MAP = {
+        # "tcp": "tcp",
+        "udp": "udp",  # server IPv4 -> client IPv4/6
+        "tcp-server": "tcp-client",
+        # "tcp4": "tcp",
+        "udp4": "udp",  # server IPv4 -> client IPv4/6
+        "tcp4-server": "tcp-client",
+        # "tcp6": "tcp",
+        "udp6": "udp",  # server IPv4/6 -> client IPv4/6
+        "tcp6-server": "tcp-client",
+    }
+
     def get_config(self, id, hostname, dev, proto, port, compress, cipher, tls_auth_path, ca_path):
         ca = self._file_content(ca_path)
         cert = self._file_content(os.path.join(self.BASE_CERT_PATH, "%s.crt" % id))
@@ -593,8 +613,9 @@ verb 3
             tls_auth_section = ""
         compress = "compress %s" % compress if compress else ""
 
-        # convert proto
-        proto = proto[:3] + ("-client" if "server" in proto else "")
+        # Derive correct 'proto' for client from server 'proto'
+        # If unsure, fallback to udp - aka UDP on IPv4/6
+        proto = self.PROTOCOLS_MAP.get(proto, "udp")
 
         return self.CONFIG_TEMPLATE % dict(
             dev=dev,
