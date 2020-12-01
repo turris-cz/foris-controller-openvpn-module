@@ -1,6 +1,6 @@
 #
 # foris-controller-openvpn-module
-# Copyright (C) 2018 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2018-2020 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -740,6 +740,7 @@ def test_update_settings_openwrt(
     )
     assert uci.get_option_named(data, "openvpn", "server_turris", "verb") == "3"
     assert uci.get_option_named(data, "openvpn", "server_turris", "mute") == "20"
+    assert uci.get_option_named(data, "openvpn", "server_turris", "topology") == "subnet"
     push_options = uci.get_option_named(data, "openvpn", "server_turris", "push")
     assert len(push_options) == 1
     assert "route 192.168.1.0 255.255.255.0" in push_options  # Default lan network
