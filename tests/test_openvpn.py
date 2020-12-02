@@ -24,15 +24,12 @@ import shutil
 from foris_controller_testtools.fixtures import (
     backend,
     infrastructure,
-    ubusd_test,
     only_backends,
     uci_configs_init,
     init_script_result,
     file_root_init,
     network_restart_command,
     UCI_CONFIG_DIR_PATH,
-    mosquitto_test,
-    start_buses,
 )
 from foris_controller_testtools.utils import (
     match_subdict,
@@ -120,7 +117,7 @@ def ready_certs():
 
 
 @pytest.mark.only_backends(["mock"])
-def test_generate_ca_mock(infrastructure, start_buses):
+def test_generate_ca_mock(infrastructure):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "generate_ca", "kind": "request"}
     )
@@ -129,7 +126,7 @@ def test_generate_ca_mock(infrastructure, start_buses):
 
 
 @pytest.mark.only_backends(["openwrt"])
-def test_generate_ca_openwrt(empty_certs, infrastructure, start_buses):
+def test_generate_ca_openwrt(empty_certs, infrastructure):
 
     filters = [("openvpn", "generate_ca")]
 
@@ -180,7 +177,7 @@ def test_generate_ca_openwrt(empty_certs, infrastructure, start_buses):
 
 
 @pytest.mark.only_backends(["mock"])
-def test_ca_get_status_mock(infrastructure, start_buses):
+def test_ca_get_status_mock(infrastructure):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
@@ -189,7 +186,7 @@ def test_ca_get_status_mock(infrastructure, start_buses):
 
 
 @pytest.mark.only_backends(["openwrt"])
-def test_get_status_openwrt_ready(ready_certs, infrastructure, start_buses):
+def test_get_status_openwrt_ready(ready_certs, infrastructure):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
@@ -209,7 +206,7 @@ def test_get_status_openwrt_ready(ready_certs, infrastructure, start_buses):
 
 
 @pytest.mark.only_backends(["openwrt"])
-def test_get_status_openwrt_missing(empty_certs, infrastructure, start_buses):
+def test_get_status_openwrt_missing(empty_certs, infrastructure):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
@@ -222,7 +219,7 @@ def test_get_status_openwrt_missing(empty_certs, infrastructure, start_buses):
 
 
 @pytest.mark.only_backends(["openwrt"])
-def test_get_status_openwrt_generating(generating_certs, infrastructure, start_buses):
+def test_get_status_openwrt_generating(generating_certs, infrastructure):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
@@ -235,7 +232,7 @@ def test_get_status_openwrt_generating(generating_certs, infrastructure, start_b
 
 
 @pytest.mark.only_backends(["mock"])
-def test_generate_client_mock(infrastructure, start_buses):
+def test_generate_client_mock(infrastructure):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
@@ -264,7 +261,7 @@ def test_generate_client_mock(infrastructure, start_buses):
 
 
 @pytest.mark.only_backends(["openwrt"])
-def test_generate_client_openwrt_success(ready_certs, infrastructure, start_buses):
+def test_generate_client_openwrt_success(ready_certs, infrastructure):
 
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_status", "kind": "request"}
@@ -316,7 +313,7 @@ def test_generate_client_openwrt_success(ready_certs, infrastructure, start_buse
 
 
 @pytest.mark.only_backends(["openwrt"])
-def test_generate_client_openwrt_failed(empty_certs, infrastructure, start_buses):
+def test_generate_client_openwrt_failed(empty_certs, infrastructure):
 
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_status", "kind": "request"}
@@ -358,7 +355,7 @@ def test_generate_client_openwrt_failed(empty_certs, infrastructure, start_buses
     assert len(res["data"]["clients"]) == 0
 
 
-def test_generate_client_name_failed(empty_certs, infrastructure, start_buses):
+def test_generate_client_name_failed(empty_certs, infrastructure):
     def wrong_name(name):
         res = infrastructure.process_message(
             {
@@ -376,7 +373,7 @@ def test_generate_client_name_failed(empty_certs, infrastructure, start_buses):
 
 
 @pytest.mark.only_backends(["mock"])
-def test_revoke_mock(infrastructure, start_buses):
+def test_revoke_mock(infrastructure):
 
     res = infrastructure.process_message(
         {
@@ -426,7 +423,7 @@ def test_revoke_mock(infrastructure, start_buses):
 
 
 @pytest.mark.only_backends(["openwrt"])
-def test_revoke_openwrt_ready(ready_certs, infrastructure, start_buses):
+def test_revoke_openwrt_ready(ready_certs, infrastructure):
     filters = [("openvpn", "revoke")]
 
     # successful generation
@@ -463,7 +460,7 @@ def test_revoke_openwrt_ready(ready_certs, infrastructure, start_buses):
 
 
 @pytest.mark.only_backends(["openwrt"])
-def test_revoke_openwrt_missing(empty_certs, infrastructure, start_buses):
+def test_revoke_openwrt_missing(empty_certs, infrastructure):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "revoke", "kind": "request", "data": {"id": "03"}}
     )
@@ -471,7 +468,7 @@ def test_revoke_openwrt_missing(empty_certs, infrastructure, start_buses):
     assert res["data"]["result"] is False
 
 
-def test_delete_ca(ready_certs, infrastructure, start_buses):
+def test_delete_ca(ready_certs, infrastructure):
     filters = [("openvpn", "delete_ca")]
 
     notifications = infrastructure.get_notifications(filters=filters)
@@ -496,7 +493,7 @@ def test_delete_ca(ready_certs, infrastructure, start_buses):
     assert res["data"]["status"] == "missing"
 
 
-def test_get_settings(uci_configs_init, infrastructure, start_buses):
+def test_get_settings(uci_configs_init, infrastructure):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_settings", "kind": "request"}
     )
@@ -516,7 +513,7 @@ def test_get_settings(uci_configs_init, infrastructure, start_buses):
 
 
 def test_update_settings(
-    uci_configs_init, init_script_result, infrastructure, start_buses, network_restart_command
+    uci_configs_init, init_script_result, infrastructure, network_restart_command
 ):
     filters = [("openvpn", "update_settings")]
 
@@ -568,7 +565,7 @@ def test_update_settings(
 
 @pytest.mark.only_backends(["openwrt"])
 def test_update_settings_openwrt(
-    uci_configs_init, init_script_result, infrastructure, start_buses, network_restart_command
+    uci_configs_init, init_script_result, infrastructure, network_restart_command
 ):
 
     uci = get_uci_module(infrastructure.name)
@@ -908,7 +905,7 @@ def test_update_settings_openwrt(
 
 @pytest.mark.only_backends(["mock"])
 @pytest.mark.parametrize("hostname", ["", "10.20.30.40"])
-def test_get_client_config_mock(infrastructure, hostname, start_buses):
+def test_get_client_config_mock(infrastructure, hostname):
     def check_hostname(server_hostname):
         if server_hostname:
             res = infrastructure.process_message(
@@ -992,7 +989,6 @@ def test_get_client_config_openwrt(
     uci_configs_init,
     init_script_result,
     infrastructure,
-    start_buses,
     hostname,
     file_root_init,
     proto,
@@ -1065,7 +1061,7 @@ def test_get_client_config_openwrt(
 @pytest.mark.only_backends(["openwrt"])
 @pytest.mark.parametrize("proto", AVAILABLE_PROTOCOLS)
 def test_available_protocols(
-    uci_configs_init, init_script_result, infrastructure, start_buses, proto
+    uci_configs_init, init_script_result, infrastructure, proto
 ):
     uci = get_uci_module(infrastructure.name)
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
@@ -1085,7 +1081,6 @@ def test_get_client_config_compress_openwrt(
     uci_configs_init,
     init_script_result,
     infrastructure,
-    start_buses,
     file_root_init,
     network_restart_command,
 ):
