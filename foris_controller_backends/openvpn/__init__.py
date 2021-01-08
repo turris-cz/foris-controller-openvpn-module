@@ -1,6 +1,6 @@
 #
 # foris-controller-openvpn-module
-# Copyright (C) 2018-2020 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
+# Copyright (C) 2018-2021 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,8 +22,10 @@ import re
 import logging
 import ipaddress
 
+from foris_controller import utils
 from foris_controller_backends.cmdline import AsyncCommand, BaseCmdLine
 from foris_controller_backends.files import BaseFile
+from foris_controller_backends.lan import LanUci
 from foris_controller_backends.uci import (
     UciBackend,
     get_option_named,
@@ -136,7 +138,7 @@ class CaGenCmds(BaseCmdLine):
         return retval == 0
 
 
-class OpenvpnUci(object):
+class OpenvpnUci:
     DEFAULTS = {
         "enabled": False,
         "network": "10.111.111.0",
@@ -149,7 +151,8 @@ class OpenvpnUci(object):
         "use_dns": False,
     }
 
-    def get_settings(self):
+    @staticmethod
+    def get_settings():
         with UciBackend() as backend:
             data = backend.read("openvpn")
             foris_data = backend.read("foris")
@@ -195,8 +198,8 @@ class OpenvpnUci(object):
             "ipv6": ipv6,
         }
 
+    @staticmethod
     def update_settings(
-        self,
         enabled,
         network=None,
         network_netmask=None,
@@ -208,8 +211,8 @@ class OpenvpnUci(object):
         with UciBackend() as backend:
             if enabled:
                 network_data = backend.read("network")
-                lan_ip = get_option_named(network_data, "network", "lan", "ipaddr")
-                lan_netmask = get_option_named(network_data, "network", "lan", "netmask")
+                lan_ip, lan_netmask, _ = LanUci.get_network_combo(network_data)
+                lan_network_addr = utils.ip_network_address(lan_ip, lan_netmask)
 
                 backend.add_section("network", "interface", "vpn_turris")
                 backend.set_option("network", "vpn_turris", "enabled", store_bool(True))
@@ -284,13 +287,7 @@ class OpenvpnUci(object):
                 backend.set_option("openvpn", "server_turris", "verb", "3")
                 backend.set_option("openvpn", "server_turris", "mute", "20")
                 backend.set_option("openvpn", "server_turris", "topology", "subnet")
-                push = [
-                    "route %s %s"
-                    % (
-                        ipaddress.ip_network(f"{lan_ip}/{lan_netmask}", False).network_address,
-                        lan_netmask,
-                    )
-                ]
+                push = [f"route {lan_network_addr} {lan_netmask}"]
                 if route_all:
                     push.append("redirect-gateway def1")
                 if use_dns:
@@ -328,6 +325,24 @@ class OpenvpnUci(object):
             services.restart("openvpn", delay=3)
 
         return True
+
+    @staticmethod
+    def reload_settings() -> None:
+        """ Trigger reload of openvpn server settings
+
+        Some config values are derived from network uci config, but only during update_settings()
+        Therefore we need a way to trigger re-read of such settings, when changes in network configuration occur
+        """
+        requested_args = [
+            "enabled", "network", "network_netmask", "route_all", "use_dns", "protocol", "ipv6"
+        ]
+        current_settings = OpenvpnUci.get_settings()
+        new_settings = {
+            key: val for key, val in current_settings.items()
+            if key in requested_args
+        }
+
+        OpenvpnUci.update_settings(**new_settings)
 
     def update_server_hostname(self, server_hostname):
         with UciBackend() as backend:

@@ -61,6 +61,11 @@ setup(
         'ubus',
         'paho-mqtt',
     ],
+    entry_points={
+        "lan_range_changed": [
+            "openvpn_reload_settings = foris_controller_backends.openvpn.__init__:OpenvpnUci.reload_settings"
+        ]
+    },
     dependency_links=[
         "git+https://gitlab.nic.cz/turris/foris-controller/foris-controller-testtools.git#egg=foris-controller-testtools",
         "git+https://gitlab.nic.cz/turris/foris-controller/foris-client.git#egg=foris-client",
