@@ -55,7 +55,7 @@ class CaGenAsync(AsyncCommand):
             return handler
 
         task_id = self.start_process(
-            ["/usr/bin/turris-cagen", "new_ca", "openvpn", "gen_ca", "gen_dh", "gen_server", "turris"],
+            ["/usr/bin/turris-cagen", "new_ca", "openvpn", "gen_ca", "link_dh", "gen_server", "turris"],
             [
                 (r"^gen_ca: started", gen_handler("ca_generating")),
                 (r"^gen_ca: finished", gen_handler("ca_done")),
