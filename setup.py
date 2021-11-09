@@ -52,7 +52,7 @@ setup(
     ],
     setup_requires=[
         'pytest-runner',
-        "flake8",
+        'flake8<4.0',  # setuptools integration with flake8 is deprecated in version >=4.0
     ],
     tests_require=[
         'pytest',
