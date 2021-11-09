@@ -1,6 +1,6 @@
 #
 # foris-controller-openvpn-module
-# Copyright (C) 2018-2020 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
+# Copyright (C) 2018-2021 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,24 +18,25 @@
 #
 
 import os
-import pytest
 import shutil
 
+import pytest
+from foris_controller.exceptions import UciRecordNotFound
 from foris_controller_testtools.fixtures import (
+    UCI_CONFIG_DIR_PATH,
     backend,
+    file_root_init,
     infrastructure,
+    init_script_result,
+    network_restart_command,
     only_backends,
     uci_configs_init,
-    init_script_result,
-    file_root_init,
-    network_restart_command,
-    UCI_CONFIG_DIR_PATH,
 )
 from foris_controller_testtools.utils import (
-    match_subdict,
     get_uci_module,
-    sh_was_called,
+    match_subdict,
     network_restart_was_called,
+    sh_was_called,
 )
 
 CERT_PATH = "/tmp/test-cagen/"
@@ -629,7 +630,7 @@ def test_update_settings_openwrt(
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         data = backend.read()
 
-    assert uci.get_option_named(data, "network", "vpn_turris", "ifname") == "tun_turris"
+    assert uci.get_option_named(data, "network", "vpn_turris", "device") == "tun_turris"
     assert uci.get_option_named(data, "network", "vpn_turris", "proto") == "none"
     assert uci.parse_bool(uci.get_option_named(data, "network", "vpn_turris", "auto")) is True
     assert uci.parse_bool(uci.get_option_named(data, "network", "vpn_turris", "enabled")) is True
@@ -757,7 +758,7 @@ def test_update_settings_openwrt(
     with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
         data = backend.read()
 
-    assert uci.get_option_named(data, "network", "vpn_turris", "ifname") == "tun_turris"
+    assert uci.get_option_named(data, "network", "vpn_turris", "device") == "tun_turris"
     assert uci.get_option_named(data, "network", "vpn_turris", "proto") == "none"
     assert uci.parse_bool(uci.get_option_named(data, "network", "vpn_turris", "auto")) is True
     assert uci.parse_bool(uci.get_option_named(data, "network", "vpn_turris", "enabled")) is True
@@ -901,6 +902,62 @@ def test_update_settings_openwrt(
     assert (
         uci.parse_bool(uci.get_option_named(data, "openvpn", "server_turris", "enabled")) is False
     )
+
+
+@pytest.mark.only_backends(["openwrt"])
+def test_update_settings_openwrt_migrate_config(
+    uci_configs_init, init_script_result, infrastructure, network_restart_command
+):
+    """Test that update will automigrate old style (OpenWrt <=19.07) network config syntax
+    It should migrate "option ifname" to "option device"
+    """
+    new_settings = {
+        "enabled": True,
+        "ipv6": True,
+        "protocol": "udp",
+        "network": "10.111.222.0",
+        "network_netmask": "255.255.254.0",
+        "route_all": False,
+        "use_dns": False,
+    }
+
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "update_settings",
+            "kind": "request",
+            "data": new_settings,
+        }
+    )
+    assert "result" in res["data"]
+    assert res["data"]["result"] is True
+
+    uci = get_uci_module(infrastructure.name)
+
+    with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
+        # use old style config syntax
+        backend.del_option("network", "vpn_turris", "device", fail_on_error=False)
+        backend.set_option("network", "vpn_turris", "ifname", "tun_turris")
+
+    res = infrastructure.process_message(
+        {
+            "module": "openvpn",
+            "action": "update_settings",
+            "kind": "request",
+            "data": new_settings,
+        }
+    )
+
+    assert "errors" not in res.keys()
+
+    with uci.UciBackend(UCI_CONFIG_DIR_PATH) as backend:
+        data = backend.read()
+
+    with pytest.raises(UciRecordNotFound):
+        # network.vpn_turris.ifname should not be present
+        uci.get_option_named(data, "network", "vpn_turris", "ifname")
+
+    assert uci.get_option_named(data, "network", "vpn_turris", "device") == "tun_turris"
 
 
 @pytest.mark.only_backends(["mock"])
@@ -1047,7 +1104,7 @@ def test_get_client_config_openwrt(
     assert "</key>" in res["data"]["config"]
 
     # Following lines regards other options which might be set in the future
-    ## tls-auth
+    ## tls-auth # noqa: E266
     # if tls_auth_used:
     #    assert "key-direction 1" in res["config"]
     #    assert "<tls-auth>" in res["data"]["config"]

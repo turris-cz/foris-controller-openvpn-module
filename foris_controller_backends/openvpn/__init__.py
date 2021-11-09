@@ -17,25 +17,26 @@
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #
 
+import ipaddress
+import logging
 import os
 import re
-import logging
-import ipaddress
 
 from foris_controller import utils
+from foris_controller.exceptions import UciRecordNotFound
 from foris_controller_backends.cmdline import AsyncCommand, BaseCmdLine
 from foris_controller_backends.files import BaseFile
 from foris_controller_backends.lan import LanUci
+from foris_controller_backends.maintain import MaintainCommands
+from foris_controller_backends.services import OpenwrtServices
 from foris_controller_backends.uci import (
     UciBackend,
+    UciException,
     get_option_named,
     parse_bool,
-    UciException,
     store_bool,
 )
 from foris_controller_backends.wan import WanStatusCommands
-from foris_controller_backends.maintain import MaintainCommands
-from foris_controller_backends.services import OpenwrtServices
 
 logger = logging.getLogger(__name__)
 
@@ -209,14 +210,16 @@ class OpenvpnUci:
         ipv6=None,
     ):
         with UciBackend() as backend:
+            network_data = backend.read("network")
+            OpenvpnUci._migrate_old_config_syntax(backend, network_data)
+
             if enabled:
-                network_data = backend.read("network")
                 lan_ip, lan_netmask, _ = LanUci.get_network_combo(network_data)
                 lan_network_addr = utils.ip_network_address(lan_ip, lan_netmask)
 
                 backend.add_section("network", "interface", "vpn_turris")
                 backend.set_option("network", "vpn_turris", "enabled", store_bool(True))
-                backend.set_option("network", "vpn_turris", "ifname", "tun_turris")
+                backend.set_option("network", "vpn_turris", "device", "tun_turris")
                 backend.set_option("network", "vpn_turris", "proto", "none")
                 backend.set_option("network", "vpn_turris", "auto", store_bool(True))
 
@@ -343,6 +346,17 @@ class OpenvpnUci:
         }
 
         OpenvpnUci.update_settings(**new_settings)
+
+    @staticmethod
+    def _migrate_old_config_syntax(backend: UciBackend, data: dict) -> None:
+        """Migrate old style (OpenWrt <=19.07) config syntax to new style (OpenWrt 21.02) syntax"""
+        try:
+            if get_option_named(data, "network", "vpn_turris", "ifname", ""):
+                # change "ifname" -> "device"
+                backend.del_option("network", "vpn_turris", "ifname", fail_on_error=False)
+                backend.set_option("network", "vpn_turris", "device", "tun_turris")
+        except UciRecordNotFound:
+            return
 
     def update_server_hostname(self, server_hostname):
         with UciBackend() as backend:
