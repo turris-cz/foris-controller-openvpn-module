@@ -1,6 +1,6 @@
 #
 # foris-controller-openvpn-module
-# Copyright (C) 2018-2021 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2018-2023 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,13 +47,8 @@ setup(
     ],
     description=DESCRIPTION,
     long_description=open('README.rst').read(),
-    install_requires=[
-        "foris-controller @ git+https://gitlab.nic.cz/turris/foris-controller/foris-controller.git",
-    ],
-    setup_requires=[
-        'pytest-runner',
-        'flake8<4.0',  # setuptools integration with flake8 is deprecated in version >=4.0
-    ],
+    install_requires=["foris-controller"],
+    setup_requires=['pytest-runner'],
     tests_require=[
         'pytest',
         'foris-controller-testtools',
@@ -66,10 +61,6 @@ setup(
             "openvpn_reload_settings = foris_controller_backends.openvpn.__init__:OpenvpnUci.reload_settings"
         ]
     },
-    dependency_links=[
-        "git+https://gitlab.nic.cz/turris/foris-controller/foris-controller-testtools.git#egg=foris-controller-testtools",
-        "git+https://gitlab.nic.cz/turris/foris-controller/foris-client.git#egg=foris-client",
-    ],
     include_package_data=True,
     zip_safe=False,
 )
