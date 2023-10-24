@@ -22,16 +22,7 @@ import shutil
 
 import pytest
 from foris_controller.exceptions import UciRecordNotFound
-from foris_controller_testtools.fixtures import (
-    UCI_CONFIG_DIR_PATH,
-    backend,
-    file_root_init,
-    infrastructure,
-    init_script_result,
-    network_restart_command,
-    only_backends,
-    uci_configs_init,
-)
+from foris_controller_testtools.fixtures import UCI_CONFIG_DIR_PATH
 from foris_controller_testtools.utils import (
     get_uci_module,
     match_subdict,
