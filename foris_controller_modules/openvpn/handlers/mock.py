@@ -1,6 +1,6 @@
 #
 # foris-controller-openvpn-module
-# Copyright (C) 2018 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2018-2024 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -61,7 +61,12 @@ class MockOpenvpnHandler(Handler, BaseMockHandler):
     @logger_wrapper(logger)
     def generate_client(self, name, notify, exit_notify, reset_notify):
         MockOpenvpnHandler.clients.append(
-            {"id": "%02X" % MockOpenvpnHandler.current_id, "name": name, "status": "valid"}
+            {
+                "id": "%02X" % MockOpenvpnHandler.current_id,
+                "name": name,
+                "status": "valid",
+                "connections": [],
+            }
         )
         MockOpenvpnHandler.current_id += 1
 

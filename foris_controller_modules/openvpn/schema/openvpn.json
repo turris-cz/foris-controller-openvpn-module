@@ -1,7 +1,29 @@
 {
     "definitions": {
         "openvpn_cert_id": {"type": "string", "pattern": "^([0-9a-fA-F][0-9a-fA-F])+$"},
-        "openvpn_cert_name": {"type": "string", "pattern": "^[a-zA-Z0-9_.-]{1,64}$"}
+        "openvpn_cert_name": {"type": "string", "pattern": "^[a-zA-Z0-9_.-]{1,64}$"},
+        "connection": {
+            "oneOf": [
+                {"enum": [null]},
+                {
+                    "type": "object",
+                    "properties": {
+                        "address": {
+                            "oneOf": [
+                                {"type": "string", "format": "ipv4"},
+                                {"type": "string", "format": "ipv6"}
+                            ]
+                        },
+                        "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+                        "in_bytes": {"type": "integer", "minimum": 0},
+                        "out_bytes": {"type": "integer", "minimum": 0},
+                        "connected_since": {"type": "string", "format": "date-time"}
+                    },
+                    "additionalProperties": false,
+                    "required": ["address","port", "in_bytes", "out_bytes", "connected_since"]
+                }
+            ]
+        }
     },
     "oneOf": [
         {
@@ -77,9 +99,13 @@
                                 "properties": {
                                     "id": {"$ref": "#/definitions/openvpn_cert_id"},
                                     "name": {"$ref": "#/definitions/openvpn_cert_name"},
-                                    "status": {"enum": ["valid", "revoked", "expired", "generating"]}
+                                    "status": {"enum": ["valid", "revoked", "expired", "generating"]},
+                                    "connections": {
+                                        "type": "array",
+                                        "items": {"$ref": "#/definitions/connection"}
+                                    }
                                 },
-                                "required": ["id", "name", "status"],
+                                "required": ["id", "name", "status", "connections"],
                                 "additionalProperties": false
                             }
                         }

@@ -1,6 +1,6 @@
 #
 # foris-controller-openvpn-module
-# Copyright (C) 2018-2021 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
+# Copyright (C) 2018-2024 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,15 +22,37 @@ import shutil
 
 import pytest
 from foris_controller.exceptions import UciRecordNotFound
-from foris_controller_testtools.fixtures import UCI_CONFIG_DIR_PATH
+from foris_controller_testtools.fixtures import UCI_CONFIG_DIR_PATH, FILE_ROOT_PATH
 from foris_controller_testtools.utils import (
     get_uci_module,
     match_subdict,
     network_restart_was_called,
     sh_was_called,
+    FileFaker,
 )
 
 CERT_PATH = "/tmp/test-cagen/"
+OPENVPN_STATUS_FILE = "/tmp/openvpn-status.log"
+
+
+@pytest.fixture(scope="function")
+def status_file():
+    content = """\
+OpenVPN CLIENT LIST
+Updated,2024-04-18 13:42:28
+Common Name,Real Address,Bytes Received,Bytes Sent,Connected Since
+client1,192.168.1.111:11111,8811,7711,2024-01-01 00:00:00
+client2,192.168.1.222:22222,8822,7722,2024-02-01 00:00:00
+ROUTING TABLE
+Virtual Address,Common Name,Real Address,Last Ref
+10.111.111.11,moje,192.168.1.111:11111,2024-01-01 00:00:00
+10.111.111.22,moje,192.168.1.222:22222,2024-02-01 00:00:00
+GLOBAL STATS
+Max bcast/mcast queue length,0
+END
+"""
+    with FileFaker(FILE_ROOT_PATH, OPENVPN_STATUS_FILE, False, content) as openvpn_status_file:
+        yield openvpn_status_file
 
 
 @pytest.fixture(scope="function")
@@ -175,10 +197,11 @@ def test_ca_get_status_mock(infrastructure):
     )
     assert res.keys() == {"module", "action", "kind", "data"}
     assert "status" in res["data"]
+    assert "clients" in res["data"]
 
 
 @pytest.mark.only_backends(["openwrt"])
-def test_get_status_openwrt_ready(ready_certs, infrastructure):
+def test_get_status_openwrt_ready(ready_certs, infrastructure, status_file):
     res = infrastructure.process_message(
         {"module": "openvpn", "action": "get_status", "kind": "request"}
     )
@@ -189,9 +212,40 @@ def test_get_status_openwrt_ready(ready_certs, infrastructure):
         "data": {
             "status": "ready",
             "clients": [
-                {"id": "02", "name": "client1", "status": "revoked"},
-                {"id": "03", "name": "client2", "status": "valid"},
-                {"id": "04", "name": "client3", "status": "generating"},
+                {
+                    "id": "02",
+                    "name": "client1",
+                    "status": "revoked",
+                    "connections": [
+                        {
+                            "address": "192.168.1.111",
+                            "port": 11111,
+                            "in_bytes": 8811,
+                            "out_bytes": 7711,
+                            "connected_since": "2024-01-01T00:00:00"
+                        },
+                    ]
+                },
+                {
+                    "id": "03",
+                    "name": "client2",
+                    "status": "valid",
+                    "connections": [
+                        {
+                            "address": "192.168.1.222",
+                            "port": 22222,
+                            "in_bytes": 8822,
+                            "out_bytes": 7722,
+                            "connected_since": "2024-02-01T00:00:00"
+                        }
+                    ],
+                },
+                {
+                    "id": "04",
+                    "name": "client3",
+                    "status": "generating",
+                    "connections": [],
+                },
             ],
         },
     }

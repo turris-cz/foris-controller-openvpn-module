@@ -33,7 +33,7 @@ def cmdline_script_root():
 
 @pytest.fixture(scope="module")
 def controller_modules():
-    return ["openvpn"]
+    return ["openvpn", "remote"]
 
 
 @pytest.fixture(scope="session")

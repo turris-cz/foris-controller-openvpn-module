@@ -1,6 +1,6 @@
 #
 # foris-controller-openvpn-module
-# Copyright (C) 2018-2021 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
+# Copyright (C) 2018-2024 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,11 +21,14 @@ import ipaddress
 import logging
 import os
 import re
+import typing
+from collections import defaultdict
+from datetime import datetime
 
 from foris_controller import utils
 from foris_controller.exceptions import UciRecordNotFound
 from foris_controller_backends.cmdline import AsyncCommand, BaseCmdLine
-from foris_controller_backends.files import BaseFile
+from foris_controller_backends.files import BaseFile, inject_file_root
 from foris_controller_backends.lan import LanUci
 from foris_controller_backends.maintain import MaintainCommands
 from foris_controller_backends.services import OpenwrtServices
@@ -100,11 +103,53 @@ class CaGenAsync(AsyncCommand):
         return task_id
 
 
+class StatusFileReader:
+    OPENVPN_STATUS_FILE = "/tmp/openvpn-status.log"
+    HEADER = "Common Name,Real Address,Bytes Received,Bytes Sent,Connected Since"
+
+    @classmethod
+    def get_connections(cls) -> typing.Dict[str, dict]:
+        """ Reads info regarding current connections """
+        res = defaultdict(list)
+        try:
+            with open(inject_file_root(cls.OPENVPN_STATUS_FILE)) as file:
+                in_section = False
+                for line in file:
+                    line = line.strip()
+                    if line == "ROUTING TABLE":
+                        break
+                    if not in_section:
+                        if line == cls.HEADER:
+                            in_section = True
+                    else:
+                        (
+                            name, ip_and_port, in_bytes, out_bytes, since
+                        ) = line.rsplit(",", 4)
+                        ip, port = ip_and_port.rsplit(":", 1)
+                        ip = str(ipaddress.ip_address(ip.strip("[]")))
+                        since = datetime.fromisoformat(since).isoformat()
+                        res[name].append({
+                            "address": ip,
+                            "port": int(port),
+                            "in_bytes": int(in_bytes),
+                            "out_bytes": int(out_bytes),
+                            "connected_since": since
+                        })
+        except Exception as e:
+            logger.warning("Failed to read connection from openvpn status file", exc_info=e)
+            # Don't crash when an error occurs
+            # this should provide additional info only
+            return {}
+
+        return res
+
+
 class CaGenCmds(BaseCmdLine):
     def get_status(self):
         output, _ = self._run_command_and_check_retval(
             ["/usr/bin/turris-cagen-status", "openvpn"], 0
         )
+        connections = StatusFileReader.get_connections()
         output = output.decode("utf-8")
         ca_status = re.search(r"^status: (\w+)$", output, re.MULTILINE).group(1)
         clients = []
@@ -115,7 +160,14 @@ class CaGenCmds(BaseCmdLine):
                 try:
                     cert_id, cert_type, name, status = line.split(" ")
                     if cert_type == "client":
-                        clients.append({"id": cert_id, "name": name, "status": status})
+                        clients.append(
+                            {
+                                "id": cert_id,
+                                "name": name,
+                                "status": status,
+                                "connections": connections.get(name, []),
+                            }
+                        )
                     elif cert_type == "server" and status == "valid":
                         server_cert_found = True
                 except ValueError:
