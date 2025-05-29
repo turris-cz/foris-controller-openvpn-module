@@ -28,7 +28,18 @@ network_interface_wan_status() {
                 }
         ],
         "ipv6-address": [
-                
+                {
+                        "address": "2001:1488:fffe:6:948f:9c3c:98cb:2bce",
+                        "mask": 128,
+                        "preferred": 604136,
+                        "valid": 2591336
+                },
+                {
+                        "address": "2001:1488:fffe:6:da58:d7ff:fe00:1a2f",
+                        "mask": 64,
+                        "preferred": 14394,
+                        "valid": 86394
+                }
         ],
         "ipv6-prefix": [
                 

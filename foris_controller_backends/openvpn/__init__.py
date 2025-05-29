@@ -1,6 +1,6 @@
 #
 # foris-controller-openvpn-module
-# Copyright (C) 2018-2024 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
+# Copyright (C) 2018-2025 CZ.NIC, z.s.p.o. (https://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ from foris_controller_backends.uci import (
     parse_bool,
     store_bool,
 )
-from foris_controller_backends.wan import WanStatusCommands
+from foris_controller_backends.networks import NetworksCmd
 
 logger = logging.getLogger(__name__)
 
@@ -491,7 +491,7 @@ proto %(proto)s
 # to load balance between the servers.
 ;remote my-server-1 1194
 ;remote my-server-2 1194
-remote %(hostname)s %(port)s
+remote %(hostname)s %(port)s %(proto_remote)s
 
 # Choose a random host from the remote
 # list for load-balancing.  Otherwise
@@ -576,17 +576,15 @@ verb 3
     #
     # for instance: TCP needs different proto on server and client
     # tcp-server (server) and tcp-client (client)
-    # NOTE: we do not use `remote <addr> <port> <proto> in client config, so we can probably ignore the `tcp`,
-    # `tcp{4,6}` and `udp{4,6}` options.
     # For more details see OpenVPN manual.
     PROTOCOLS_MAP = {
-        # "tcp": "tcp",
+        "tcp": "tcp",
         "udp": "udp",  # server IPv4 -> client IPv4/6
         "tcp-server": "tcp-client",
-        # "tcp4": "tcp",
+        "tcp4": "tcp",
         "udp4": "udp",  # server IPv4 -> client IPv4/6
         "tcp4-server": "tcp-client",
-        # "tcp6": "tcp",
+        "tcp6": "tcp",
         "udp6": "udp",  # server IPv4/6 -> client IPv4/6
         "tcp6-server": "tcp-client",
     }
@@ -599,7 +597,16 @@ verb 3
         if not hostname:
             # try to figure out wan ip
             try:
-                addresses = WanStatusCommands().get_status()["ipv4"]
+                if "6" in proto:
+                    # Extract ipv6 address into config
+                    addresses = NetworksCmd().get_network_info("wan6")["ipv6"]
+                    # only global
+                    addresses = [
+                        e for e in addresses if ipaddress.ip_address(e).is_global
+                    ]
+                else:
+                    # Extract ipv4 address into config
+                    addresses = NetworksCmd().get_network_info("wan")["ipv4"]
                 hostname = addresses[0]
             except Exception as e:
                 logger.warning("%r", e)
@@ -620,6 +627,7 @@ verb 3
         return self.CONFIG_TEMPLATE % dict(
             dev=dev,
             proto=proto.replace("server", "client"),
+            proto_remote=proto.split("-", 1)[0],  # udp{4,6} / tcp{4,6}
             port=port,
             hostname=hostname,
             ca=ca,
