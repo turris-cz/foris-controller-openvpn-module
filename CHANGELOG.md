@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-06-05
+### Added
+- autodetect ipv6 address of WAN for client configs
+
+### Fixed
+- 'proto' option in client config
+- update pyproject.toml to please pip
+
 ## [1.0.0] - 2024-05-23
 ### Added
 - add info regarding current connections per client certificate
