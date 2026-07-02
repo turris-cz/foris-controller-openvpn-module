@@ -30,6 +30,9 @@ ubus = [
     "ubus",
 ]
 
+[project.entry-points.foris_controller_modules]
+openvpn = "foris_controller_modules.openvpn"
+
 [project.entry-points.lan_range_changed]
 openvpn_reload_settings = "foris_controller_backends.openvpn.__init__:OpenvpnUci.reload_settings"
 
